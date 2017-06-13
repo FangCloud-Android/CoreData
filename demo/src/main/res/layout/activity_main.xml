@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".test.MainActivity">
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="addBookClick"
+        android:text="添加一本书"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="addBookListClick"
+        android:text="添加10000本书"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="queryBookListClick"
+        android:text="取出所有数据"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="queryBookAndDisplayClick"
+        android:text="取出一条数据并显示"/>
+
+    <TextView
+        android:id="@+id/book_display"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="这是给书预留的"/>
+</LinearLayout>
