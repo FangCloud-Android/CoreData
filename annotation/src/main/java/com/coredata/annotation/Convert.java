@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.CLASS)
 public @interface Convert {
 
-    String converter();
+    Class<?> converter();
 
-    String dbType();
+    Class<?> dbType();
 }

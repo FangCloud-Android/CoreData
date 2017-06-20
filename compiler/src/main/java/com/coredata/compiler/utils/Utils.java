@@ -18,6 +18,7 @@ import java.util.Set;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -169,6 +170,12 @@ public class Utils {
         return listCreatePro;
     }
 
+    /**
+     * 静态参数，final参数和transient参数都不是数据库类型
+     *
+     * @param modifiers
+     * @return
+     */
     private static boolean isDbElement(Set<Modifier> modifiers) {
         for (Modifier modifier : modifiers) {
             if (Modifier.STATIC.equals(modifier)) {
@@ -312,7 +319,7 @@ public class Utils {
                     } else {
                         Convert convert = element.getAnnotation(Convert.class);
                         if (convert != null) {
-                            ClassName classConvertDb = ClassName.bestGuess(convert.dbType());
+                            TypeName classConvertDb = Utils.getConvertDbType(convert);
                             if (Utils.isBaseType(classConvertDb)) {
                                 dbBaseType = classConvertDb;
                             } else {
@@ -347,10 +354,24 @@ public class Utils {
     public static TypeName getDbType(Element element) {
         Convert convert = element.getAnnotation(Convert.class);
         if (convert != null) {
-            return ClassName.bestGuess(convert.dbType());
+            return getConvertDbType(convert);
         }
         return ClassName.get(element.asType());
     }
 
+    public static TypeName getConvertDbType(Convert convert) {
+        try {
+            return ClassName.get(convert.dbType());
+        } catch (MirroredTypeException e) {
+            return ClassName.get(e.getTypeMirror());
+        }
+    }
 
+    public static TypeName getConverterType(Convert convert) {
+        try {
+            return ClassName.get(convert.converter());
+        } catch (MirroredTypeException e) {
+            return ClassName.get(e.getTypeMirror());
+        }
+    }
 }

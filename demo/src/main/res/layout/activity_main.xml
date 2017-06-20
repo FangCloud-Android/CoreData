@@ -36,4 +36,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="这是给书预留的"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="deleteAllClick"
+        android:text="删除所有"/>
 </LinearLayout>

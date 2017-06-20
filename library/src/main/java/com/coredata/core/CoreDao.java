@@ -11,9 +11,10 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Created by wangjinpeng on 2017/6/5.
+ * Dao，实体都会拥有一个Dao实例，可进行增删改查
+ *
+ * @param <T>
  */
-
 public abstract class CoreDao<T> {
 
     private SQLiteOpenHelper dbHelper;
@@ -102,6 +103,47 @@ public abstract class CoreDao<T> {
     protected abstract List<T> bindCursor(Cursor cursor);
 
     /**
+     * 单条数据插入 内部使用
+     *
+     * @param t
+     * @param db
+     * @return
+     */
+    protected boolean replace(T t, SQLiteDatabase db) {
+        // 查找出 所有关联的对象对应的dao，以及所对应的dao
+        List<T> tList = new ArrayList<>();
+        tList.add(t);
+        return replace(tList, db);
+    }
+
+    /**
+     * 插入集合数据, 内部使用
+     *
+     * @param tCollection
+     * @param db
+     * @return
+     */
+    public boolean replace(Collection<T> tCollection, SQLiteDatabase db) {
+        return replaceInternal(tCollection, db);
+    }
+
+    /**
+     * 绑定数据并提交插入
+     *
+     * @param tList
+     * @param db
+     * @return
+     */
+    protected boolean executeInsert(List<T> tList, SQLiteDatabase db) {
+        SQLiteStatement statement = db.compileStatement(getInsertSql());
+        for (T t : tList) {
+            bindStatement(statement, t);
+            statement.executeInsert();
+        }
+        return true;
+    }
+
+    /**
      * 单条数据插入
      *
      * @param t
@@ -120,13 +162,12 @@ public abstract class CoreDao<T> {
         return true;
     }
 
-    public boolean replace(T t, SQLiteDatabase db) {
-        // 查找出 所有关联的对象对应的dao，以及所对应的dao
-        List<T> tList = new ArrayList<>();
-        tList.add(t);
-        return replace(tList, db);
-    }
-
+    /**
+     * 插入集合数据
+     *
+     * @param tCollection
+     * @return
+     */
     public boolean replace(Collection<T> tCollection) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         db.beginTransaction();
@@ -137,34 +178,21 @@ public abstract class CoreDao<T> {
         return true;
     }
 
-    public boolean replace(Collection<T> tCollection, SQLiteDatabase db) {
-        return replaceInternal(tCollection, db);
-    }
-
-    protected boolean executeInsert(List<T> tList, SQLiteDatabase db) {
-        SQLiteStatement statement = db.compileStatement(getInsertSql());
-        for (T t : tList) {
-            bindStatement(statement, t);
-            statement.executeInsert();
-        }
-        return true;
-    }
-
+    /**
+     * 查询所有数据
+     *
+     * @return
+     */
     public List<T> queryAll() {
-        String sql = "select * from " + getTableName();
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-        Cursor cursor = db.rawQuery(sql, null);
-        List<T> tList = null;
-        try {
-            tList = bindCursor(cursor);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            closeCursor(cursor);
-        }
-        return tList;
+        return queryWhere(null);
     }
 
+    /**
+     * 根据主键查询数据
+     *
+     * @param key
+     * @return
+     */
     public T queryByKey(Object key) {
         List<T> tList = queryByKeys(key);
         if (tList != null && !tList.isEmpty()) {
@@ -173,6 +201,12 @@ public abstract class CoreDao<T> {
         return null;
     }
 
+    /**
+     * 根据给定的主键列表查询数据
+     *
+     * @param keys
+     * @return
+     */
     public List<T> queryByKeys(Object... keys) {
         StringBuilder append = new StringBuilder();
         boolean isFirst = true;
@@ -184,11 +218,20 @@ public abstract class CoreDao<T> {
             }
             append.append(key);
         }
-        String sql = String.format("select * from %s where %s.%s in (%s)",
-                getTableName(),
+        return queryWhere(String.format("%s.%s in (%s)",
                 getTableName(),
                 getPrimaryKeyName(),
-                append);
+                append));
+    }
+
+    /**
+     * 根据给定的条件进行查询
+     *
+     * @param whereClause
+     * @return
+     */
+    public List<T> queryWhere(String whereClause) {
+        String sql = "SELECT * FROM " + getTableName() + (TextUtils.isEmpty(whereClause) ? "" : " WHERE " + whereClause);
         SQLiteDatabase db;
         Cursor cursor = null;
         try {
@@ -203,6 +246,67 @@ public abstract class CoreDao<T> {
         return null;
     }
 
+    /**
+     * 删除全部
+     *
+     * @return
+     */
+    public boolean deleteAll() {
+        return deleteWhere(null);
+    }
+
+    /**
+     * 根据给定主键删除
+     *
+     * @param key
+     */
+    public boolean deleteByKey(Object key) {
+        return deleteWhere(
+                String.format(
+                        "%s.%s = %s",
+                        getTableName(),
+                        getPrimaryKeyName(),
+                        String.valueOf(key)));
+    }
+
+    /**
+     * 根据给定主键列表删除
+     *
+     * @param keys
+     */
+    public boolean deleteByKeys(Object... keys) {
+        StringBuilder append = new StringBuilder();
+        boolean isFirst = true;
+        for (Object key : keys) {
+            if (isFirst) {
+                isFirst = false;
+            } else {
+                append.append(",");
+            }
+            append.append(key);
+        }
+        return deleteWhere(String.format("%s.%s in (%s)",
+                getTableName(),
+                getPrimaryKeyName(),
+                append));
+    }
+
+    /**
+     * 根据给定条件进行删除
+     *
+     * @param whereClause
+     * @return
+     */
+    public boolean deleteWhere(String whereClause) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        return db.delete(getTableName(), whereClause, null) > 0;
+    }
+
+    /**
+     * 关闭游标
+     *
+     * @param cursor
+     */
     private void closeCursor(Cursor cursor) {
         try {
             if (cursor != null) {

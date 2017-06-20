@@ -1,8 +1,5 @@
 package com.wanpg.core.test;
 
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -125,5 +122,14 @@ public class MainActivity extends AppCompatActivity {
         long start3 = System.currentTimeMillis();
         Author author1 = book.getAuthor();
         Log.d("wanpg", "再尝试取一次吧耗时" + (System.currentTimeMillis() - start3));
+    }
+
+    public void deleteAllClick(View view) {
+        queryIndex++;
+        Log.d("wanpg", "开始删除所有书籍");
+        long start1 = System.currentTimeMillis();
+        boolean b = CoreData.defaultInstance().dao(Book.class).deleteAll();
+        Log.d("wanpg", "删除结果" + b);
+        Log.d("wanpg", "删除所有书籍" + (System.currentTimeMillis() - start1));
     }
 }

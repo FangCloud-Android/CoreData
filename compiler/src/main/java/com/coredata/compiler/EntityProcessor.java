@@ -111,8 +111,7 @@ public final class EntityProcessor extends AbstractProcessor {
         // 创建convert
         for (Element convertElement : convertElements) {
             Convert convert = convertElement.getAnnotation(Convert.class);
-            String converter = convert.converter();
-            ClassName classConverter = ClassName.bestGuess(converter);
+            ClassName classConverter = ClassName.bestGuess(Utils.getConverterType(convert).toString());
             FieldSpec fieldSpec = FieldSpec.builder(
                     classConverter,
                     Utils.converterName(classConverter),

@@ -19,6 +19,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.Name;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.MirroredTypeException;
 import javax.lang.model.type.TypeMirror;
 
 import static com.coredata.compiler.EntityProcessor.classCursor;
@@ -163,13 +164,13 @@ public class BindCursorMethod extends BaseMethod {
             }
             Convert convert = element.getAnnotation(Convert.class);
             if (convert != null) {
-                ClassName classConverter = ClassName.bestGuess(convert.converter());
-                ClassName classDbType = ClassName.bestGuess(convert.dbType());
-                if (!classDbType.isPrimitive()) {
+                ClassName classConverter = ClassName.bestGuess(Utils.getConverterType(convert).toString());
+                TypeName convertDbType = Utils.getConvertDbType(convert);
+                if (!convertDbType.isPrimitive()) {
                     builder.addCode("if(!cursor.isNull(cursorIndexOf$N)){\n  ", Utils.getColumnName(element));
                 }
                 builder.addStatement(Utils.methodSetFormat(element, prefix), Utils.converterName(classConverter) + ".convertToValue(" + cursorGetMethod(element, Utils.getDbType(element)) + ")");
-                if (!classDbType.isPrimitive()) {
+                if (!convertDbType.isPrimitive()) {
                     builder.addCode("}");
                 }
                 return;

@@ -26,7 +26,7 @@ public class Book {
 
     public String name;
 
-    @Convert(converter = "com.wanpg.core.test.model.Book.TagListConverter", dbType = "java.lang.String")
+    @Convert(converter = TagListConverter.class, dbType = String.class)
     public List<Tag> tags;
 
     @Relation

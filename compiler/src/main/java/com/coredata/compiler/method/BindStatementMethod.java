@@ -16,6 +16,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.MirroredTypeException;
 
 public class BindStatementMethod extends BaseMethod {
 
@@ -65,8 +66,8 @@ public class BindStatementMethod extends BaseMethod {
                     Convert convert = element.getAnnotation(Convert.class);
                     if (convert != null) {
                         // 转换
-                        ClassName classConverter = ClassName.bestGuess(convert.converter());
-                        ClassName dbClassName = ClassName.bestGuess(convert.dbType());
+                        ClassName classConverter = ClassName.bestGuess(Utils.getConverterType(convert).toString());
+                        ClassName dbClassName = ClassName.bestGuess(Utils.getConvertDbType(convert).toString());
                         if (!carePrefix || TextUtils.isEmpty(prefix)) {
                             builder.addStatement("$T __temp_$N = $N", dbClassName, String.valueOf(index), formatBindMethod(fieldGetMethod, Utils.converterName(classConverter)));
                         } else {
