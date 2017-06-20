@@ -12,7 +12,17 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.CLASS)
 public @interface Convert {
 
+    /**
+     * 转换器Class
+     *
+     * @return 实现了com.coredata.core.PropertyConverter的Class
+     */
     Class<?> converter();
 
+    /**
+     * 制定对象在数据库中的类型
+     *
+     * @return 数据库中的类型
+     */
     Class<?> dbType();
 }

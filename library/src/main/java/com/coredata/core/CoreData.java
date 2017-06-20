@@ -52,7 +52,8 @@ public class CoreData {
     /**
      * 此方法是初始化CoreData的入口
      *
-     * @param builder
+     * @param application 给定Application上下文
+     * @param builder     {@link Builder}构建工具
      */
     public synchronized static void init(Application application, Builder builder) {
         if (instance != null) {
@@ -65,7 +66,7 @@ public class CoreData {
     /**
      * 获取默认实例
      *
-     * @return
+     * @return 返回一个默认且唯一的实例
      */
     public static CoreData defaultInstance() {
         if (instance == null) {

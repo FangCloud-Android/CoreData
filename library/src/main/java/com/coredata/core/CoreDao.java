@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Dao，实体都会拥有一个Dao实例，可进行增删改查
  *
- * @param <T>
+ * @param <T> Dao对应的实体类
  */
 public abstract class CoreDao<T> {
 
@@ -22,7 +22,7 @@ public abstract class CoreDao<T> {
     /**
      * 数据库创建
      *
-     * @param db
+     * @param db {@link SQLiteOpenHelper#onCreate(SQLiteDatabase)}
      */
     void onDataBaseCreate(SQLiteDatabase db) {
         db.execSQL(getCreateTableSql());
@@ -31,9 +31,9 @@ public abstract class CoreDao<T> {
     /**
      * 数据库升级
      *
-     * @param db
-     * @param oldVersion
-     * @param newVersion
+     * @param db         {@link SQLiteOpenHelper#onUpgrade(SQLiteDatabase, int, int)}
+     * @param oldVersion 老版本
+     * @param newVersion 新版本
      */
     void onDataBaseUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         String originTableCreateSql = null;
@@ -62,9 +62,9 @@ public abstract class CoreDao<T> {
     /**
      * 数据库降级
      *
-     * @param db
-     * @param oldVersion
-     * @param newVersion
+     * @param db         {@link SQLiteOpenHelper#onDowngrade(SQLiteDatabase, int, int)}
+     * @param oldVersion 老版本
+     * @param newVersion 新版本
      */
     void onDataBaseDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE " + getTableName());
@@ -74,7 +74,7 @@ public abstract class CoreDao<T> {
     /**
      * 数据库创建
      *
-     * @param dbHelper
+     * @param dbHelper 数据库管理类
      */
     protected void onCreate(SQLiteOpenHelper dbHelper) {
         this.dbHelper = dbHelper;
@@ -90,9 +90,8 @@ public abstract class CoreDao<T> {
 
     /**
      * 获取插入语句
-     * "INSERT OR REPLACE INTO `Book`(`id`,`name`,`tags`,`author_id`,`desc_content`,`desc_email`) VALUES (?,?,?,?,?,?)"
      *
-     * @return
+     * @return 返回插入数据库语句，例如"INSERT OR REPLACE INTO `Book`(`id`,`name`,`tags`,`author_id`,`desc_content`,`desc_email`) VALUES (?,?,?,?,?,?)"
      */
     protected abstract String getInsertSql();
 
@@ -105,9 +104,9 @@ public abstract class CoreDao<T> {
     /**
      * 单条数据插入 内部使用
      *
-     * @param t
-     * @param db
-     * @return
+     * @param t  实体对象
+     * @param db SQLiteDatabase对象
+     * @return 是否插入成功
      */
     protected boolean replace(T t, SQLiteDatabase db) {
         // 查找出 所有关联的对象对应的dao，以及所对应的dao
@@ -119,20 +118,20 @@ public abstract class CoreDao<T> {
     /**
      * 插入集合数据, 内部使用
      *
-     * @param tCollection
-     * @param db
-     * @return
+     * @param tCollection 实体集合
+     * @param db          SQLiteDatabase对象
+     * @return 是否插入成功
      */
     public boolean replace(Collection<T> tCollection, SQLiteDatabase db) {
         return replaceInternal(tCollection, db);
     }
 
     /**
-     * 绑定数据并提交插入
+     * 绑定数据并提交插入, 内部使用
      *
-     * @param tList
-     * @param db
-     * @return
+     * @param tList 实例List
+     * @param db    SQLiteDatabase对象
+     * @return 是否插入成功
      */
     protected boolean executeInsert(List<T> tList, SQLiteDatabase db) {
         SQLiteStatement statement = db.compileStatement(getInsertSql());
@@ -146,8 +145,8 @@ public abstract class CoreDao<T> {
     /**
      * 单条数据插入
      *
-     * @param t
-     * @return
+     * @param t 实体对象
+     * @return 是否插入成功
      */
     public boolean replace(T t) {
         if (t == null) {
@@ -165,8 +164,8 @@ public abstract class CoreDao<T> {
     /**
      * 插入集合数据
      *
-     * @param tCollection
-     * @return
+     * @param tCollection 实体集合
+     * @return 是否插入成功
      */
     public boolean replace(Collection<T> tCollection) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
@@ -181,7 +180,7 @@ public abstract class CoreDao<T> {
     /**
      * 查询所有数据
      *
-     * @return
+     * @return 实体对象List
      */
     public List<T> queryAll() {
         return queryWhere(null);
@@ -190,8 +189,8 @@ public abstract class CoreDao<T> {
     /**
      * 根据主键查询数据
      *
-     * @param key
-     * @return
+     * @param key 主键value
+     * @return 实体对象，可能为null
      */
     public T queryByKey(Object key) {
         List<T> tList = queryByKeys(key);
@@ -204,8 +203,8 @@ public abstract class CoreDao<T> {
     /**
      * 根据给定的主键列表查询数据
      *
-     * @param keys
-     * @return
+     * @param keys 主键values
+     * @return 实体对象List
      */
     public List<T> queryByKeys(Object... keys) {
         StringBuilder append = new StringBuilder();
@@ -227,8 +226,8 @@ public abstract class CoreDao<T> {
     /**
      * 根据给定的条件进行查询
      *
-     * @param whereClause
-     * @return
+     * @param whereClause 条件语句
+     * @return 实体对象List
      */
     public List<T> queryWhere(String whereClause) {
         String sql = "SELECT * FROM " + getTableName() + (TextUtils.isEmpty(whereClause) ? "" : " WHERE " + whereClause);
@@ -249,7 +248,7 @@ public abstract class CoreDao<T> {
     /**
      * 删除全部
      *
-     * @return
+     * @return 是否删除成功
      */
     public boolean deleteAll() {
         return deleteWhere(null);
@@ -258,7 +257,8 @@ public abstract class CoreDao<T> {
     /**
      * 根据给定主键删除
      *
-     * @param key
+     * @param key 主键value
+     * @return 是否删除成功
      */
     public boolean deleteByKey(Object key) {
         return deleteWhere(
@@ -272,7 +272,8 @@ public abstract class CoreDao<T> {
     /**
      * 根据给定主键列表删除
      *
-     * @param keys
+     * @param keys 主键value列表
+     * @return 是否删除成功
      */
     public boolean deleteByKeys(Object... keys) {
         StringBuilder append = new StringBuilder();
@@ -294,8 +295,8 @@ public abstract class CoreDao<T> {
     /**
      * 根据给定条件进行删除
      *
-     * @param whereClause
-     * @return
+     * @param whereClause 给定删除条件
+     * @return 是否删除成功
      */
     public boolean deleteWhere(String whereClause) {
         SQLiteDatabase db = dbHelper.getWritableDatabase();
@@ -305,7 +306,7 @@ public abstract class CoreDao<T> {
     /**
      * 关闭游标
      *
-     * @param cursor
+     * @param cursor 游标
      */
     private void closeCursor(Cursor cursor) {
         try {

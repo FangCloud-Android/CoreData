@@ -18,8 +18,8 @@ public class Property {
     /**
      * 注意：只比较type、name
      *
-     * @param o
-     * @return
+     * @param o 给定参数
+     * @return true 为相等，false为不相等
      */
     @Override
     public boolean equals(Object o) {

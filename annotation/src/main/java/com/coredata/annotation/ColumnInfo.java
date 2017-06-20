@@ -16,7 +16,7 @@ public @interface ColumnInfo {
      * 设置此参数且不为空的，持久化字段名将被设置
      * 如果未设置，字段名将与变量名保持一致
      *
-     * @return
+     * @return 在数据库中的列名
      */
     String name() default "";
 

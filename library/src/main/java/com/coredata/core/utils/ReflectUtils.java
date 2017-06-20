@@ -8,7 +8,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by wangjinpeng on 2017/3/21.
+ * 反射工具类
  */
 public class ReflectUtils {
 
@@ -17,7 +17,7 @@ public class ReflectUtils {
      *
      * @param clazz    获取变量的类
      * @param endClazz 获取变量的终点
-     * @return
+     * @return 返回给定类中所有的field
      */
     public static List<Field> getAllFields(Class clazz, Class endClazz) {
         if (clazz == null || clazz.getName().equals(endClazz.getName())) {

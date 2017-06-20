@@ -12,5 +12,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.CLASS)
 public @interface Entity {
 
+    /**
+     * 实体对应的表名，默认是实体{@link Class#getSimpleName()}
+     *
+     * @return tableName
+     */
     String tableName() default "";
 }

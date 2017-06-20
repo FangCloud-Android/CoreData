@@ -14,7 +14,7 @@ buildscript {
 
 ext {
     GROUP = 'com.coredata'
-    VERSION = '0.0.3-SNAPSHOT'
+    VERSION = '0.0.5-SNAPSHOT'
 }
 
 allprojects {
