@@ -69,9 +69,9 @@ public class BindStatementMethod extends BaseMethod {
                         ClassName classConverter = ClassName.bestGuess(Utils.getConverterType(convert).toString());
                         ClassName dbClassName = ClassName.bestGuess(Utils.getConvertDbType(convert).toString());
                         if (!carePrefix || TextUtils.isEmpty(prefix)) {
-                            builder.addStatement("$T __temp_$N = $N", dbClassName, String.valueOf(index), formatBindMethod(fieldGetMethod, Utils.converterName(classConverter)));
+                            builder.addStatement("$T __temp_$N = $N", dbClassName, String.valueOf(index), formatBindMethod(fieldGetMethod, Utils.converterName(element, classConverter)));
                         } else {
-                            builder.addStatement("$T __temp_$N = $N == null ? $N : $N", dbClassName, String.valueOf(index), prefix, getDefaultValue(dbClassName), formatBindMethod(fieldGetMethod, Utils.converterName(classConverter)));
+                            builder.addStatement("$T __temp_$N = $N == null ? $N : $N", dbClassName, String.valueOf(index), prefix, getDefaultValue(dbClassName), formatBindMethod(fieldGetMethod, Utils.converterName(element, classConverter)));
                         }
                         bindTo(builder, dbClassName, index, "__temp_" + index, null);
                     } else {
@@ -138,6 +138,14 @@ public class BindStatementMethod extends BaseMethod {
     }
 
     private static String getBindStr(TypeName typeName) {
+        TypeName unbox = null;
+        try {
+            unbox = typeName.unbox();
+        } catch (Exception ignored) {
+        }
+        if (unbox != null) {
+            typeName = unbox;
+        }
         if (typeName == TypeName.BYTE
                 || typeName == TypeName.SHORT
                 || typeName == TypeName.INT
@@ -149,9 +157,8 @@ public class BindStatementMethod extends BaseMethod {
             return "bindDouble";
         } else if (typeName == TypeName.BOOLEAN) {
             return "bindLong";
-        } else {
-            return "bindString";
         }
+        return "bindString";
     }
 
     private static Object getDefaultValue(TypeName typeName) {

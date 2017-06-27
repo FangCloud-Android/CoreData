@@ -3,6 +3,8 @@ package com.coredata.core.utils;
 import com.coredata.core.CoreDao;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,5 +52,9 @@ public class ReflectUtils {
             throw new RuntimeException("Failed to create an instance of "
                     + tClass.getCanonicalName());
         }
+    }
+
+    public static Type getGenericityType(Class aClass) {
+        return aClass.getGenericSuperclass();
     }
 }

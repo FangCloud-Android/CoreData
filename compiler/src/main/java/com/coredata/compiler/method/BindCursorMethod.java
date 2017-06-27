@@ -169,7 +169,7 @@ public class BindCursorMethod extends BaseMethod {
                 if (!convertDbType.isPrimitive()) {
                     builder.addCode("if(!cursor.isNull(cursorIndexOf$N)){\n  ", Utils.getColumnName(element));
                 }
-                builder.addStatement(Utils.methodSetFormat(element, prefix), Utils.converterName(classConverter) + ".convertToValue(" + cursorGetMethod(element, Utils.getDbType(element)) + ")");
+                builder.addStatement(Utils.methodSetFormat(element, prefix), Utils.converterName(element, classConverter) + ".convertToValue(" + cursorGetMethod(element, Utils.getDbType(element)) + ")");
                 if (!convertDbType.isPrimitive()) {
                     builder.addCode("}");
                 }

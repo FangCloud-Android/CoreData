@@ -4,6 +4,7 @@ import com.coredata.annotation.Convert;
 import com.coredata.annotation.Embedded;
 import com.coredata.annotation.Entity;
 import com.coredata.compiler.db.Property;
+import com.coredata.compiler.method.CreateConvertStatement;
 import com.coredata.compiler.method.BindCursorMethod;
 import com.coredata.compiler.method.BindStatementMethod;
 import com.coredata.compiler.method.ReplaceInternalMethod;
@@ -15,7 +16,6 @@ import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
-import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import java.io.IOException;
@@ -109,16 +109,11 @@ public final class EntityProcessor extends AbstractProcessor {
                 .superclass(ParameterizedTypeName.get(classCoreDao, classEntity));
 
         // 创建convert
-        for (Element convertElement : convertElements) {
-            Convert convert = convertElement.getAnnotation(Convert.class);
-            ClassName classConverter = ClassName.bestGuess(Utils.getConverterType(convert).toString());
-            FieldSpec fieldSpec = FieldSpec.builder(
-                    classConverter,
-                    Utils.converterName(classConverter),
-                    Modifier.PRIVATE, Modifier.FINAL)
-                    .initializer("new $T()", classConverter)
-                    .build();
-            daoTypeBuilder.addField(fieldSpec);
+        List<FieldSpec> convertFieldSpecs = CreateConvertStatement.bindComvertFields(convertElements);
+        if(convertFieldSpecs != null){
+            for(FieldSpec fieldSpec : convertFieldSpecs){
+                daoTypeBuilder.addField(fieldSpec);
+            }
         }
 
         // onCreate方法

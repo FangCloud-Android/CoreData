@@ -6,7 +6,10 @@ import com.coredata.annotation.Embedded;
 import com.coredata.annotation.Entity;
 import com.coredata.annotation.PrimaryKey;
 import com.coredata.annotation.Relation;
-import com.coredata.core.PropertyConverter;
+import com.coredata.core.converter.JSONConverter;
+import com.coredata.core.converter.SerializableConverter;
+import com.coredata.core.converter.SerializableListConverter;
+import com.coredata.core.converter.StringArrayConverter;
 
 import java.util.List;
 
@@ -26,12 +29,18 @@ public class Book {
 
     public String name;
 
-    @Convert(converter = TagListConverter.class, dbType = String.class)
+    @Convert(converter = SerializableListConverter.class, dbType = String.class)
     public List<Tag> tags;
+
+    @Convert(converter = StringArrayConverter.class, dbType = String.class)
+    public String[] permissions;
 
     @Relation
     @ColumnInfo(name = "author_id")
     public Author author;
+
+    @Convert(converter = SerializableConverter.class, dbType = String.class)
+    public Address address;
 
     /**
      * 内嵌字段，适用于简单字段
@@ -39,20 +48,10 @@ public class Book {
     @Embedded
     public Desc desc;
 
+    @Convert(converter = JSONConverter.class, dbType = String.class)
+    public List<String> testList;
+
     public Author getAuthor() {
         return author;
-    }
-
-    public static class TagListConverter implements PropertyConverter<List<Tag>, String> {
-
-        @Override
-        public String convertToProperty(List<Tag> tags) {
-            return "";
-        }
-
-        @Override
-        public List<Tag> convertToValue(String s) {
-            return null;
-        }
     }
 }

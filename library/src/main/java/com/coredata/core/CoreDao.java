@@ -183,7 +183,7 @@ public abstract class CoreDao<T> {
      * @return 实体对象List
      */
     public List<T> queryAll() {
-        return queryWhere(null);
+        return query().result();
     }
 
     /**
@@ -217,20 +217,21 @@ public abstract class CoreDao<T> {
             }
             append.append(key);
         }
-        return queryWhere(String.format("%s.%s in (%s)",
-                getTableName(),
-                getPrimaryKeyName(),
-                append));
+        return query()
+                .where(String.format("%s.%s in (%s)",
+                        getTableName(),
+                        getPrimaryKeyName(),
+                        append))
+                .result();
     }
 
     /**
      * 根据给定的条件进行查询
      *
-     * @param whereClause 条件语句
+     * @param sql sql语句
      * @return 实体对象List
      */
-    public List<T> queryWhere(String whereClause) {
-        String sql = "SELECT * FROM " + getTableName() + (TextUtils.isEmpty(whereClause) ? "" : " WHERE " + whereClause);
+    List<T> querySqlInternal(String sql) {
         SQLiteDatabase db;
         Cursor cursor = null;
         try {
@@ -243,6 +244,15 @@ public abstract class CoreDao<T> {
             closeCursor(cursor);
         }
         return null;
+    }
+
+    /**
+     * 查询，生成一个查询用的结构处理集
+     *
+     * @return 创建一个结果处理集合
+     */
+    public ResultSet<T> query() {
+        return new ResultSet<>(this);
     }
 
     /**

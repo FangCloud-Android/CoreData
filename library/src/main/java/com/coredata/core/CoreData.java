@@ -19,6 +19,7 @@ public class CoreData {
         private ArrayList<Class<?>> coreObjectTypeList;
         private String name;
         private int version;
+        private JSONAdapter jsonAdapter;
 
         public static Builder builder() {
             return new Builder();
@@ -40,6 +41,11 @@ public class CoreData {
 
         public Builder version(int version) {
             this.version = version;
+            return this;
+        }
+
+        public Builder registerJSONAdapter(JSONAdapter jsonAdapter) {
+            this.jsonAdapter = jsonAdapter;
             return this;
         }
     }
@@ -117,5 +123,9 @@ public class CoreData {
     @SuppressWarnings("unchecked")
     public <T> CoreDao<T> dao(Class<T> clazz) {
         return coreDaoHashMap.get(clazz);
+    }
+
+    public static JSONAdapter getJSONAdapter() {
+        return defaultInstance().builder.jsonAdapter;
     }
 }

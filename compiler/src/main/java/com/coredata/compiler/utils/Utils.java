@@ -191,8 +191,8 @@ public class Utils {
         return true;
     }
 
-    public static String converterName(ClassName classConverter) {
-        return "__" + classConverter.simpleName();
+    public static String converterName(Element element, ClassName classConverter) {
+        return "__" + element.getSimpleName() + "_" + classConverter.simpleName();
     }
 
     public static String relationDaoName(ClassName classRelation) {
