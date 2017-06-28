@@ -6,6 +6,7 @@ import com.coredata.core.CoreData;
 import com.coredata.core.JSONAdapter;
 import com.wanpg.core.test.model.Author;
 import com.wanpg.core.test.model.Book;
+import com.wanpg.core.test.model.Magazine;
 import com.wanpg.core.test.model.Time;
 
 import java.io.File;
@@ -25,7 +26,8 @@ public class BaseApplication extends Application {
                 .register(
                         Book.class,
                         Author.class,
-                        Time.class)
+                        Time.class,
+                        Magazine.class)
                 .registerJSONAdapter(new JSONAdapter() {
                     @Override
                     public String toString(Object o) {

@@ -157,10 +157,17 @@ public class Utils {
     public static List<Element> getElementsForDb(Elements elements, TypeElement element) {
         List<Element> listCreatePro = new ArrayList<>();
         List<? extends Element> enclosedElements = element.getEnclosedElements();
+        boolean hasPrimaryKey = false;
         for (Element member : enclosedElements) {
             if (member.getKind().isField()) {
                 if (isDbElement(member.getModifiers())) {
                     if (member.getAnnotation(Ignore.class) == null) {
+                        if (member.getAnnotation(PrimaryKey.class) != null) {
+                            if (hasPrimaryKey) {
+                                throw new RuntimeException(element.getSimpleName() + "同时拥有两个主键，目前不支持多主键");
+                            }
+                            hasPrimaryKey = true;
+                        }
                         listCreatePro.add(member);
                         System.out.println(member.getSimpleName() + "----" + member.getKind());
                     }
@@ -277,11 +284,15 @@ public class Utils {
 
     public static List<Property> getProperties(Elements elementUtils, Types typeUtils, List<Element> elements) {
         List<Property> propertyList = new ArrayList<>();
+        boolean hasPrimaryKey = false;
         for (Element element : elements) {
             boolean isPrimaryKey = false;
-            PrimaryKey primaryKey = element.getAnnotation(PrimaryKey.class);
-            if (primaryKey != null) {
-                isPrimaryKey = true;
+            if (!hasPrimaryKey) {
+                PrimaryKey primaryKey = element.getAnnotation(PrimaryKey.class);
+                if (primaryKey != null) {
+                    hasPrimaryKey = true;
+                    isPrimaryKey = true;
+                }
             }
 
             String name = null;
