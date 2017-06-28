@@ -9,13 +9,12 @@ import java.util.List;
  *
  * @param <T> 对应的实体类型
  */
-public final class ResultSet<T> {
+public final class ResultSet<T> extends BaseSet<T> {
 
-    private final CoreDao<T> coreDao;
     private final StringBuilder sqlBuilder;
 
     ResultSet(CoreDao<T> coreDao) {
-        this.coreDao = coreDao;
+        super(coreDao);
         sqlBuilder = new StringBuilder()
                 .append("SELECT * FROM ").append(coreDao.getTableName());
     }
@@ -31,6 +30,13 @@ public final class ResultSet<T> {
                 .append(expression);
         return this;
     }
+
+    public ResultSet<T> or(String expression) {
+        sqlBuilder.append(" OR ")
+                .append(expression);
+        return this;
+    }
+
 
     public ResultSet<T> groupBy(String expression) {
         sqlBuilder.append(" GROUP BY ")
@@ -50,7 +56,19 @@ public final class ResultSet<T> {
         return this;
     }
 
+    public ResultSet<T> limit(int size) {
+        sqlBuilder.append(" LIMIT ")
+                .append(String.valueOf(size));
+        return this;
+    }
+
+    public ResultSet<T> offset(int offset) {
+        sqlBuilder.append(" OFFSET ")
+                .append(String.valueOf(offset));
+        return this;
+    }
+
     public List<T> result() {
-        return coreDao.querySqlInternal(sqlBuilder.toString());
+        return getCoreDao().querySqlInternal(sqlBuilder.toString());
     }
 }

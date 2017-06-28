@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
                 index++;
                 Book book = new Book();
                 book.id = index;
-                book.name = "book_" + index;
+                book.setName("book_" + index);
                 book.desc = new Desc("content" + index, "email" + index);
                 book.author = new Author(10000 + index, "author_" + index);
                 List<Tag> tags = new ArrayList<Tag>();
@@ -65,7 +65,7 @@ public class MainActivity extends AppCompatActivity {
                 for (int index = 0; index < 10000; index++) {
                     Book book = new Book();
                     book.id = index;
-                    book.name = "book_" + index;
+                    book.setName("book_" + index);
                     book.desc = new Desc("content" + index, "email" + index);
                     book.author = new Author(10000 + index, "author_" + index);
                     List<Tag> tags = new ArrayList<Tag>();
@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d("wanpg", "作者取出完毕耗时" + (System.currentTimeMillis() - start2));
         if (author != null) {
             TextView textView = (TextView) findViewById(R.id.book_display);
-            textView.setText("书名：" + book.name + "    作者：" + author.getName());
+            textView.setText("书名：" + book.getName() + "    作者：" + author.getName());
         }
 
         Log.d("wanpg", "再尝试取一次吧");

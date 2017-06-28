@@ -27,7 +27,9 @@ public class Book {
     @PrimaryKey
     public long id;
 
-    public String name;
+    @Setter
+    @Getter
+    private String name;
 
     @Convert(converter = SerializableListConverter.class, dbType = String.class)
     public List<Tag> tags;

@@ -156,8 +156,8 @@ public class Utils {
      */
     public static List<Element> getElementsForDb(Elements elements, TypeElement element) {
         List<Element> listCreatePro = new ArrayList<>();
-        List<? extends Element> allMembers = elements.getAllMembers(element);
-        for (Element member : allMembers) {
+        List<? extends Element> enclosedElements = element.getEnclosedElements();
+        for (Element member : enclosedElements) {
             if (member.getKind().isField()) {
                 if (isDbElement(member.getModifiers())) {
                     if (member.getAnnotation(Ignore.class) == null) {
@@ -166,6 +166,9 @@ public class Utils {
                     }
                 }
             }
+        }
+        if (!element.getSuperclass().toString().equals(Object.class.getCanonicalName())) {
+            listCreatePro.addAll(getElementsForDb(elements, elements.getTypeElement(element.getSuperclass().toString())));
         }
         return listCreatePro;
     }
@@ -200,8 +203,7 @@ public class Utils {
     }
 
     public static Element primaryKeyElement(List<Element> elements) {
-        for (int i = 0; i < elements.size(); i++) {
-            Element element = elements.get(i);
+        for (Element element : elements) {
             if (element.getAnnotation(PrimaryKey.class) != null) {
                 return element;
             }

@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
 import android.text.TextUtils;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -17,6 +18,7 @@ import java.util.List;
  */
 public abstract class CoreDao<T> {
 
+    private static final Object lock = new Object();
     private SQLiteOpenHelper dbHelper;
 
     /**
@@ -46,9 +48,7 @@ public abstract class CoreDao<T> {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
+            closeCursor(cursor);
         }
 
         if (TextUtils.isEmpty(originTableCreateSql)) {
@@ -152,12 +152,13 @@ public abstract class CoreDao<T> {
         if (t == null) {
             return false;
         }
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        db.beginTransaction();
-        replace(t, db);
-        db.setTransactionSuccessful();
-        db.endTransaction();
-        db.close();
+        synchronized (lock) {
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
+            db.beginTransaction();
+            replace(t, db);
+            db.setTransactionSuccessful();
+            db.endTransaction();
+        }
         return true;
     }
 
@@ -168,12 +169,13 @@ public abstract class CoreDao<T> {
      * @return 是否插入成功
      */
     public boolean replace(Collection<T> tCollection) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        db.beginTransaction();
-        replace(tCollection, db);
-        db.setTransactionSuccessful();
-        db.endTransaction();
-        db.close();
+        synchronized (lock) {
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
+            db.beginTransaction();
+            replace(tCollection, db);
+            db.setTransactionSuccessful();
+            db.endTransaction();
+        }
         return true;
     }
 
@@ -207,6 +209,9 @@ public abstract class CoreDao<T> {
      * @return 实体对象List
      */
     public List<T> queryByKeys(Object... keys) {
+        if (keys == null || keys.length <= 0) {
+            return new ArrayList<>();
+        }
         StringBuilder append = new StringBuilder();
         boolean isFirst = true;
         for (Object key : keys) {
@@ -232,18 +237,21 @@ public abstract class CoreDao<T> {
      * @return 实体对象List
      */
     List<T> querySqlInternal(String sql) {
-        SQLiteDatabase db;
-        Cursor cursor = null;
-        try {
-            db = dbHelper.getReadableDatabase();
-            cursor = db.rawQuery(sql, null);
-            return bindCursor(cursor);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            closeCursor(cursor);
+        synchronized (lock) {
+            Log.d("CoreData", "CoreDao--querySqlInternal--sql:" + sql);
+            SQLiteDatabase db;
+            Cursor cursor = null;
+            try {
+                db = dbHelper.getReadableDatabase();
+                cursor = db.rawQuery(sql, null);
+                return bindCursor(cursor);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                closeCursor(cursor);
+            }
+            return new ArrayList<>();
         }
-        return null;
     }
 
     /**
@@ -261,7 +269,7 @@ public abstract class CoreDao<T> {
      * @return 是否删除成功
      */
     public boolean deleteAll() {
-        return deleteWhere(null);
+        return delete().execute();
     }
 
     /**
@@ -271,12 +279,13 @@ public abstract class CoreDao<T> {
      * @return 是否删除成功
      */
     public boolean deleteByKey(Object key) {
-        return deleteWhere(
-                String.format(
+        return delete()
+                .where(String.format(
                         "%s.%s = %s",
                         getTableName(),
                         getPrimaryKeyName(),
-                        String.valueOf(key)));
+                        String.valueOf(key)))
+                .execute();
     }
 
     /**
@@ -286,6 +295,9 @@ public abstract class CoreDao<T> {
      * @return 是否删除成功
      */
     public boolean deleteByKeys(Object... keys) {
+        if (keys == null || keys.length <= 0) {
+            return false;
+        }
         StringBuilder append = new StringBuilder();
         boolean isFirst = true;
         for (Object key : keys) {
@@ -296,21 +308,40 @@ public abstract class CoreDao<T> {
             }
             append.append(key);
         }
-        return deleteWhere(String.format("%s.%s in (%s)",
-                getTableName(),
-                getPrimaryKeyName(),
-                append));
+        return delete()
+                .where(String.format("%s.%s in (%s)",
+                        getTableName(),
+                        getPrimaryKeyName(),
+                        append))
+                .execute();
+    }
+
+    public DeleteSet<T> delete() {
+        return new DeleteSet<>(this);
     }
 
     /**
-     * 根据给定条件进行删除
+     * 返回一个更新的操作集合
      *
-     * @param whereClause 给定删除条件
+     * @return 更新操作集合，在这里可以做set和where的操作
+     */
+    public UpdateSet<T> update() {
+        return new UpdateSet<>(this);
+    }
+
+    /**
+     * 给定sql更新或者删除
+     *
+     * @param sql
      * @return 是否删除成功
      */
-    public boolean deleteWhere(String whereClause) {
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-        return db.delete(getTableName(), whereClause, null) > 0;
+    boolean updateDeleteInternal(String sql) {
+        synchronized (lock) {
+            Log.d("CoreData", "CoreDao--updateDeleteInternal--sql:" + sql);
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
+            SQLiteStatement s = db.compileStatement(sql);
+            return s.executeUpdateDelete() > 0;
+        }
     }
 
     /**
