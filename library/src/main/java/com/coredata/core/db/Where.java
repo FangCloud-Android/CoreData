@@ -1,6 +1,7 @@
 package com.coredata.core.db;
 
 import com.coredata.core.BaseSet;
+import com.coredata.core.UpdateSet;
 import com.coredata.utils.SqlUtils;
 
 public class Where<T extends BaseSet> {
@@ -35,7 +36,9 @@ public class Where<T extends BaseSet> {
             }
             append.append(key);
         }
-        t.append(append.toString());
+        t.append(" IN (")
+                .append(append.toString())
+                .append(")");
         return t;
     }
 }

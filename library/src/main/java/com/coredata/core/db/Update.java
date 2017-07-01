@@ -17,7 +17,7 @@ public class Update<T extends BaseSet> {
     }
 
     public T value(Object o) {
-        t.append(SqlUtils.formatValue(o));
+        t.append(" = ").append(SqlUtils.formatValue(o));
         return t;
     }
 }
