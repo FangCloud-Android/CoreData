@@ -7,7 +7,7 @@ import com.coredata.annotation.Entity;
 import com.coredata.annotation.Ignore;
 import com.coredata.annotation.PrimaryKey;
 import com.coredata.annotation.Relation;
-import com.coredata.compiler.db.Property;
+import com.coredata.db.Property;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 

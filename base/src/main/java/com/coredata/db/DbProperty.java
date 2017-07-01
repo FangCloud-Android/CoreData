@@ -1,15 +1,17 @@
-package com.coredata.core;
+package com.coredata.db;
+
+import com.coredata.utils.SqlUtils;
 
 /**
- * 存储table字段
+ * 存储table字段,type指的是db的数据类型，比如 INT, BIGINT, TEXT等
  */
-public class Property {
+public class DbProperty {
 
     public final String name;
-    public final Class<?> type;
+    public final String type;
     public final boolean primaryKey;
 
-    public Property(String name, Class<?> type, boolean primaryKey) {
+    public DbProperty(String name, String type, boolean primaryKey) {
         this.type = type;
         this.primaryKey = primaryKey;
         this.name = name;
@@ -23,9 +25,9 @@ public class Property {
      */
     @Override
     public boolean equals(Object o) {
-        return o instanceof Property
-                && this.type == ((Property) o).type
-                && this.name.equals(((Property) o).name);
+        return o instanceof DbProperty
+                && this.type.equals(((DbProperty) o).type)
+                && this.name.equals(((DbProperty) o).name);
     }
 
     /**

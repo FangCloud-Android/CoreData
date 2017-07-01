@@ -1,5 +1,7 @@
 package com.coredata.core;
 
+import com.coredata.core.db.Where;
+
 /**
  * Created by wangjinpeng on 2017/6/27.
  */
@@ -14,22 +16,25 @@ public class DeleteSet<T> extends BaseSet<T> {
                 .append("DELETE FROM ").append(coreDao.getTableName());
     }
 
-    public DeleteSet<T> where(String expression) {
-        sqlBuilder.append(" WHERE ")
-                .append(expression);
+    @Override
+    public DeleteSet<T> append(String e) {
+        sqlBuilder.append(e);
         return this;
     }
 
-    public DeleteSet<T> and(String expression) {
-        sqlBuilder.append(" AND ")
-                .append(expression);
-        return this;
+    public Where<DeleteSet<T>> where(String columnName) {
+        sqlBuilder.append(" WHERE ");
+        return new Where<>(this, columnName);
     }
 
-    public DeleteSet<T> or(String expression) {
-        sqlBuilder.append(" OR ")
-                .append(expression);
-        return this;
+    public Where<DeleteSet<T>> andWhere(String columnName) {
+        sqlBuilder.append(" AND ");
+        return new Where<>(this, columnName);
+    }
+
+    public Where<DeleteSet<T>> orWhere(String columnName) {
+        sqlBuilder.append(" OR ");
+        return new Where<>(this, columnName);
     }
 
     public boolean execute() {

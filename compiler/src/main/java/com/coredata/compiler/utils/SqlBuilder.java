@@ -1,6 +1,7 @@
 package com.coredata.compiler.utils;
 
-import com.coredata.compiler.db.Property;
+import com.coredata.db.Property;
+import com.coredata.utils.SqlUtils;
 
 import java.util.List;
 
@@ -8,7 +9,7 @@ import java.util.List;
  * Created by wangjinpeng on 2017/6/8.
  */
 
-public class SqlUtils {
+public class SqlBuilder {
 
 
     /**
@@ -25,7 +26,7 @@ public class SqlUtils {
         for (int i = 0; i < listSize; i++) {
             Property property = properties.get(i);
             sql.append("'").append(property.name).append("' ");
-            sql.append(getSqlTypeByClazz(property.type));
+            sql.append(SqlUtils.getSqlTypeByClazz(property.type));
             sql.append(property.primaryKey ? " PRIMARY KEY" : "");
             if (i < listSize - 1) {
                 sql.append(",");
@@ -33,26 +34,5 @@ public class SqlUtils {
         }
         sql.append(");");
         return sql.toString();
-    }
-
-    /**
-     * 根据Class类型返回sqlite中对应的类型名称
-     *
-     * @param clazz
-     * @return
-     */
-    public static String getSqlTypeByClazz(Class<?> clazz) {
-        if (clazz == String.class) {
-            return "TEXT";
-        } else if (clazz == Integer.class) {
-            return "INTEGER";
-        } else if (clazz == Long.class || clazz == long.class) {
-            return "BIGINT";
-        } else if (clazz == Boolean.class || clazz == boolean.class) {
-            return "INTEGER";
-        } else if (clazz == int.class) {
-            return "INT";
-        }
-        return "";
     }
 }

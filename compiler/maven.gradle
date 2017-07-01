@@ -1,5 +1,5 @@
 // *********************************************************************
-apply plugin: 'maven'
+apply plugin: 'maven-publish'
 apply plugin: 'signing' //使用signing plugin做数字签名
 
 group = GROUP
@@ -15,56 +15,37 @@ def isReleaseBuild() {
     return !version.contains("SNAPSHOT");
 }
 
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            //为Pom文件做数字签名
-            beforeDeployment { MavenDeployment deployment ->
-                if (version.contains("SNAPSHOT"))
-                    return
-                signing.signPom(deployment)
+
+publishing {
+    publications {
+        Annotation(MavenPublication) {
+            artifactId 'coredata-compiler'
+            from components.java
+        }
+    }
+}
+
+publishing {
+    publications {
+        Annotation(MavenPublication) {
+            pom.withXml {
+                asNode().appendNode('description',
+                        '一个android的sqlite关系映射ORM')
             }
+        }
+    }
+}
 
-            //指定项目部署到的中央库地址，UserName和Password就是Part 1中注册的账号。
-            repository(url: uri("../repo"))
-            snapshotRepository(url: uri("../repo"))
-
-//            repository(url: RELEASE_URL) {
-//                authentication(userName: NAME, password: PASSWORD)
-//            }
-//            snapshotRepository(url: SNAPSHOT_URL) {
-//                authentication(userName: NAME, password: PASSWORD)
-//            }
-
-            //构造项目的Pom文件，参见Part 2中Pom文件的规范，不要遗漏必填项
-            pom.project {
-                name 'CoreData:compiler'
-                packaging 'aar'
-                description '一个android的sqlite关系映射ORM'
-                artifactId 'coredata-compiler'
-//                url 'http://192.168.0.234/android/Widget.git'
-
-//                scm {
-//                    url 'scm:git@github.com:wangjiegulu/AndroidBucket.git'
-//                    connection 'scm:git@github.com:wangjiegulu/AndroidBucket.git'
-//                    developerConnection 'git@github.com:wangjiegulu/AndroidBucket.git'
-//                }
-
-//                licenses {
-//                    license {
-//                        name 'The Apache Software License, Version 2.0'
-//                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-//                        distribution 'wangjie'
-//                    }
-//                }
-
-//                developers {
-//                    developer {
-//                        id 'wangjie'
-//                        name 'Wagn Jie'
-//                        email 'tiantian.china.2@gmail.com'
-//                    }
-//                }
+publishing {
+    repositories {
+        //指定项目部署到的中央库地址，UserName和Password就是Part 1中注册的账号。
+        if (TEST) {
+            maven {
+                url TEST_REPO
+            }
+        } else {
+            maven {
+                url SNAPSHOT_URL
             }
         }
     }

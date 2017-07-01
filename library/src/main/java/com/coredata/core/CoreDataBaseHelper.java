@@ -13,9 +13,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by wangjinpeng on 2017/3/21.
+ * CoreData绑定Sqlite3的Helper
+ *
+ * @author wangjinpeng
  */
-
 public class CoreDataBaseHelper extends SQLiteOpenHelper {
 
     private HashMap<Class, CoreDao> coreDaoHashMap;
@@ -64,10 +65,23 @@ public class CoreDataBaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        // 目前降级操作时删除所有表，并重新创建
+        // 先取出老的表结构
+        List<String> originTableList = originTableList(db);
+        // 如果存在执行降级，不存在执行创建
         for (Map.Entry<Class, CoreDao> entry : coreDaoHashMap.entrySet()) {
-            entry.getValue().onDataBaseDowngrade(db, oldVersion, newVersion);
+            CoreDao value = entry.getValue();
+            boolean remove = originTableList.remove(value.getTableName());
+            if (remove) {
+                value.onDataBaseDowngrade(db, oldVersion, newVersion);
+            } else {
+                value.onDataBaseCreate(db);
+            }
         }
-        Log.d("wanpg", "CoreDataBaseHelper----onDowngrade");
+        // 剩下的删除表
+        for (String leftTableName : originTableList) {
+            db.execSQL("DROP TABLE " + leftTableName);
+        }
     }
 
     private List<String> originTableList(SQLiteDatabase db) {

@@ -53,6 +53,10 @@ public class Book {
     @Convert(converter = JSONConverter.class, dbType = String.class)
     public List<String> testList;
 
+    String tag1;
+    String tag2;
+    String tag3;
+
     public Author getAuthor() {
         return author;
     }

@@ -16,13 +16,8 @@ def isReleaseBuild() {
 }
 
 task sourcesJar(type: Jar) {
-    from android.sourceSets.main.java.srcDirs
+    from sourceSets.main.allJava
     classifier = 'sources'
-}
-
-task javadoc(type: Javadoc) {
-    source = android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
@@ -37,9 +32,9 @@ artifacts {
 
 publishing {
     publications {
-        Core(MavenPublication) {
-            artifactId 'coredata-core'
-            artifact("$buildDir/outputs/aar/${project.getName()}-release.aar")
+        Annotation(MavenPublication) {
+            artifactId 'coredata-base'
+            from components.java
             artifact(sourcesJar)
             artifact(javadocJar)
         }
@@ -48,17 +43,10 @@ publishing {
 
 publishing {
     publications {
-        Core(MavenPublication) {
+        Annotation(MavenPublication) {
             pom.withXml {
                 asNode().appendNode('description',
                         '一个android的sqlite关系映射ORM')
-                def dependencies = asNode().appendNode('dependencies')
-                configurations.getByName("_releaseCompile").getResolvedConfiguration().getFirstLevelModuleDependencies().each {
-                    def dependency = dependencies.appendNode('dependency')
-                    dependency.appendNode('groupId', it.moduleGroup)
-                    dependency.appendNode('artifactId', 'coredata-' + it.moduleName)
-                    dependency.appendNode('version', it.moduleVersion)
-                }
             }
         }
     }

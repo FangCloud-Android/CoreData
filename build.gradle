@@ -14,7 +14,14 @@ buildscript {
 
 ext {
     GROUP = 'com.coredata'
-    VERSION = '0.0.8-SNAPSHOT'
+    VERSION = '0.0.10-SNAPSHOT'
+
+    TEST_REPO = '../repo'
+    RELEASE_URL = ''
+    SNAPSHOT_URL = ''
+    NAME = ''
+    PASSWORD = ''
+    TEST = true
 }
 
 allprojects {

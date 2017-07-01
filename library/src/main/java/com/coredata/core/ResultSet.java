@@ -1,6 +1,7 @@
 package com.coredata.core;
 
 import com.coredata.core.db.Order;
+import com.coredata.core.db.Where;
 
 import java.util.List;
 
@@ -9,7 +10,7 @@ import java.util.List;
  *
  * @param <T> 对应的实体类型
  */
-public final class ResultSet<T> extends BaseSet<T> {
+public class ResultSet<T> extends BaseSet<T> {
 
     private final StringBuilder sqlBuilder;
 
@@ -19,24 +20,26 @@ public final class ResultSet<T> extends BaseSet<T> {
                 .append("SELECT * FROM ").append(coreDao.getTableName());
     }
 
-    public ResultSet<T> where(String expression) {
-        sqlBuilder.append(" WHERE ")
-                .append(expression);
+    @Override
+    public ResultSet<T> append(String e) {
+        sqlBuilder.append(e);
         return this;
     }
 
-    public ResultSet<T> and(String expression) {
-        sqlBuilder.append(" AND ")
-                .append(expression);
-        return this;
+    public Where<ResultSet<T>> where(String columnName) {
+        sqlBuilder.append(" WHERE ");
+        return new Where<>(this, columnName);
     }
 
-    public ResultSet<T> or(String expression) {
-        sqlBuilder.append(" OR ")
-                .append(expression);
-        return this;
+    public Where<ResultSet<T>> andWhere(String columnName) {
+        sqlBuilder.append(" AND ");
+        return new Where<>(this, columnName);
     }
 
+    public Where<ResultSet<T>> orWhere(String columnName) {
+        sqlBuilder.append(" OR ");
+        return new Where<>(this, columnName);
+    }
 
     public ResultSet<T> groupBy(String expression) {
         sqlBuilder.append(" GROUP BY ")

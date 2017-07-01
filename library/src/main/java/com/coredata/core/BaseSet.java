@@ -4,7 +4,7 @@ package com.coredata.core;
  * Created by wangjinpeng on 2017/6/27.
  */
 
-public class BaseSet<T> {
+public abstract class BaseSet<T> {
 
     private final CoreDao<T> coreDao;
 
@@ -15,4 +15,6 @@ public class BaseSet<T> {
     protected CoreDao<T> getCoreDao() {
         return coreDao;
     }
+
+    public abstract BaseSet<T> append(String e);
 }

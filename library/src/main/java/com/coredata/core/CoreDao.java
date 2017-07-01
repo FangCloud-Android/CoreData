@@ -1,11 +1,17 @@
 package com.coredata.core;
 
+import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.DatabaseUtils;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteStatement;
-import android.text.TextUtils;
 import android.util.Log;
+
+import com.coredata.db.DbProperty;
+import com.coredata.db.Property;
+import com.coredata.utils.SqlUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,24 +44,118 @@ public abstract class CoreDao<T> {
      * @param newVersion 新版本
      */
     void onDataBaseUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        String originTableCreateSql = null;
-        Cursor cursor = null;
-        try {
-            cursor = db.rawQuery(String.format("SELECT sql FROM sqlite_master WHERE type='table' AND name='%s'", getTableName()), null);
-            if (cursor.moveToNext()) {
-                originTableCreateSql = cursor.getString(cursor.getColumnIndex("sql"));
+        synchronized (lock) {
+            List<DbProperty> dbProperties = new ArrayList<>();
+            Cursor cursor = null;
+            try {
+                cursor = db.rawQuery(String.format("PRAGMA TABLE_INFO(%s)", getTableName()), null);
+                int nameCursorIndex = cursor.getColumnIndex("name");
+                int typeCursorIndex = cursor.getColumnIndex("type");
+                int nonNullCursorIndex = cursor.getColumnIndex("notnull");
+                int defValCursorIndex = cursor.getColumnIndex("dflt_value");
+                int primaryKeyCursorIndex = cursor.getColumnIndex("pk");
+                while (cursor.moveToNext()) {
+                    String name = cursor.getString(nameCursorIndex);
+                    String type = cursor.getString(typeCursorIndex);
+                    boolean primaryKey = cursor.getInt(primaryKeyCursorIndex) == 1;
+                    dbProperties.add(new DbProperty(name, type, primaryKey));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                closeCursor(cursor);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            closeCursor(cursor);
-        }
 
-        if (TextUtils.isEmpty(originTableCreateSql)) {
-            db.execSQL("DROP TABLE " + getTableName());
-            db.execSQL(getCreateTableSql());
-        } else {
-            // 解析原始表创建语句，分析字段对应类型及主键，索引等参数是否一致，并进行修改
+            if (dbProperties.isEmpty()) {
+                // 如果找不到建表语句，则删除旧表重新创建
+                db.execSQL(SqlUtils.getDropTableSql(getTableName()));
+                db.execSQL(getCreateTableSql());
+            } else {
+                // 解析原始表创建语句，分析字段对应类型及主键，索引等参数是否一致，并进行修改
+
+                // 匹配相交的数据
+                List<Property> tableProperties = getTableProperties();
+                List<DbProperty> newDbProperties = new ArrayList<>();
+                for (Property property : tableProperties) {
+                    newDbProperties.add(
+                            new DbProperty(property.name,
+                                    SqlUtils.getSqlTypeByClazz(property.type),
+                                    property.primaryKey));
+                }
+
+                // 以新表为基准求交集，如果新表是旧表的子集，并且size相等，说明不需要迁移表，不需要做任何处理
+                // 如果求交集数据有变化，或者新旧表列数不相等，则需要迁移
+                if (newDbProperties.retainAll(dbProperties)
+                        || tableProperties.size() != dbProperties.size()) {
+                    // 修改老表到临时表
+                    String tempTableName = getTableName() + "_" + oldVersion;
+                    boolean needMoveData = true;
+                    try {
+                        db.execSQL(String.format("ALTER TABLE %s RENAME TO %s", getTableName(), tempTableName));
+                    } catch (SQLException e) {
+                        // 修改表结构失败
+                        db.execSQL(SqlUtils.getDropTableSql(getTableName()));
+                        needMoveData = false;
+                    }
+                    // 创建新的表
+                    db.execSQL(getCreateTableSql());
+                    // 交集不为空则进行数据迁移
+
+                    if (needMoveData && !newDbProperties.isEmpty()) {
+                        try {
+                            // 取出老的数据
+                            boolean isJoinPrimaryKey = false;
+                            for (DbProperty dbProperty : newDbProperties) {
+                                if (dbProperty.primaryKey) {
+                                    isJoinPrimaryKey = true;
+                                    break;
+                                }
+                            }
+                            // 如果交集中有主键，则需要数据迁移
+                            // 如果主键不一致，说明数据没有迁移的必要
+                            if (isJoinPrimaryKey) {
+                                // 从老表中取出所有交集的数据
+                                StringBuilder sqlBuilder = new StringBuilder("SELECT ");
+                                boolean isFirst = true;
+                                for (DbProperty dbProperty : newDbProperties) {
+                                    if (!isFirst) {
+                                        sqlBuilder.append(", ");
+                                    }
+                                    isFirst = false;
+                                    sqlBuilder.append(dbProperty.name);
+                                }
+                                sqlBuilder.append(" FROM ").append(tempTableName);
+                                List<ContentValues> contentValuesList = new ArrayList<>();
+                                Cursor cursorData = null;
+                                try {
+                                    // 取出所有相交的数据，并转换为ContentValues
+                                    cursorData = db.rawQuery(sqlBuilder.toString(), null);
+                                    while (cursorData.moveToNext()) {
+                                        ContentValues contentValues = new ContentValues();
+                                        DatabaseUtils.cursorRowToContentValues(cursorData, contentValues);
+                                        contentValuesList.add(contentValues);
+                                    }
+                                } finally {
+                                    closeCursor(cursorData);
+                                }
+                                // 插入新表
+                                if (!contentValuesList.isEmpty()) {
+                                    db.beginTransaction();
+                                    for (ContentValues cv : contentValuesList) {
+                                        db.replace(getTableName(), null, cv);
+                                    }
+                                    db.setTransactionSuccessful();
+                                    db.endTransaction();
+                                }
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    // 删除旧表
+                    db.execSQL(SqlUtils.getDropTableSql(tempTableName));
+                }
+            }
         }
     }
 
@@ -67,7 +167,7 @@ public abstract class CoreDao<T> {
      * @param newVersion 新版本
      */
     void onDataBaseDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE " + getTableName());
+        db.execSQL(SqlUtils.getDropTableSql(getTableName()));
         onDataBaseCreate(db);
     }
 
@@ -212,21 +312,8 @@ public abstract class CoreDao<T> {
         if (keys == null || keys.length <= 0) {
             return new ArrayList<>();
         }
-        StringBuilder append = new StringBuilder();
-        boolean isFirst = true;
-        for (Object key : keys) {
-            if (isFirst) {
-                isFirst = false;
-            } else {
-                append.append(",");
-            }
-            append.append(key);
-        }
         return query()
-                .where(String.format("%s.%s in (%s)",
-                        getTableName(),
-                        getPrimaryKeyName(),
-                        append))
+                .where(getPrimaryKeyName()).in(keys)
                 .result();
     }
 
@@ -280,11 +367,7 @@ public abstract class CoreDao<T> {
      */
     public boolean deleteByKey(Object key) {
         return delete()
-                .where(String.format(
-                        "%s.%s = %s",
-                        getTableName(),
-                        getPrimaryKeyName(),
-                        String.valueOf(key)))
+                .where(getPrimaryKeyName()).eq(key)
                 .execute();
     }
 
@@ -298,21 +381,8 @@ public abstract class CoreDao<T> {
         if (keys == null || keys.length <= 0) {
             return false;
         }
-        StringBuilder append = new StringBuilder();
-        boolean isFirst = true;
-        for (Object key : keys) {
-            if (isFirst) {
-                isFirst = false;
-            } else {
-                append.append(",");
-            }
-            append.append(key);
-        }
         return delete()
-                .where(String.format("%s.%s in (%s)",
-                        getTableName(),
-                        getPrimaryKeyName(),
-                        append))
+                .where(getPrimaryKeyName()).in(keys)
                 .execute();
     }
 

@@ -3,12 +3,12 @@ package com.coredata.compiler;
 import com.coredata.annotation.Convert;
 import com.coredata.annotation.Embedded;
 import com.coredata.annotation.Entity;
-import com.coredata.compiler.db.Property;
+import com.coredata.db.Property;
 import com.coredata.compiler.method.CreateConvertStatement;
 import com.coredata.compiler.method.BindCursorMethod;
 import com.coredata.compiler.method.BindStatementMethod;
 import com.coredata.compiler.method.ReplaceInternalMethod;
-import com.coredata.compiler.utils.SqlUtils;
+import com.coredata.compiler.utils.SqlBuilder;
 import com.coredata.compiler.utils.TextUtils;
 import com.coredata.compiler.utils.Utils;
 import com.squareup.javapoet.ClassName;
@@ -42,7 +42,7 @@ public final class EntityProcessor extends AbstractProcessor {
 
     public static final ClassName classCoreDao = ClassName.bestGuess("com.coredata.core.CoreDao");
     public static final ClassName classCoreData = ClassName.bestGuess("com.coredata.core.CoreData");
-    public static final ClassName classCoreProperty = ClassName.bestGuess("com.coredata.core.Property");
+    public static final ClassName classCoreProperty = ClassName.get(Property.class);
     public static final ClassName classSQLiteOpenHelper = ClassName.bestGuess("android.database.sqlite.SQLiteOpenHelper");
     public static final ClassName classSQLiteStatement = ClassName.bestGuess("android.database.sqlite.SQLiteStatement");
     public static final ClassName classSQLiteDatabase = ClassName.bestGuess("android.database.sqlite.SQLiteDatabase");
@@ -110,8 +110,8 @@ public final class EntityProcessor extends AbstractProcessor {
 
         // 创建convert
         List<FieldSpec> convertFieldSpecs = CreateConvertStatement.bindComvertFields(convertElements);
-        if(convertFieldSpecs != null){
-            for(FieldSpec fieldSpec : convertFieldSpecs){
+        if (convertFieldSpecs != null) {
+            for (FieldSpec fieldSpec : convertFieldSpecs) {
                 daoTypeBuilder.addField(fieldSpec);
             }
         }
@@ -150,7 +150,7 @@ public final class EntityProcessor extends AbstractProcessor {
         MethodSpec getCreateTableSqlMethod = MethodSpec.methodBuilder("getCreateTableSql")
                 .addModifiers(Modifier.PROTECTED)
                 .returns(String.class)
-                .addStatement("return $S", SqlUtils.buildCreateSql(tableName, propertyList, true))
+                .addStatement("return $S", SqlBuilder.buildCreateSql(tableName, propertyList, true))
                 .build();
 
         // getInsertSql 方法，用来获取插入语句
