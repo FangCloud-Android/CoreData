@@ -20,13 +20,7 @@ task sourcesJar(type: Jar) {
     classifier = 'sources'
 }
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
 artifacts {
-    archives javadocJar
     archives sourcesJar
 }
 
@@ -36,7 +30,6 @@ publishing {
             artifactId 'coredata-annotations'
             from components.java
             artifact(sourcesJar)
-            artifact(javadocJar)
         }
     }
 }

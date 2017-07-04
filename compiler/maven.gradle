@@ -15,12 +15,21 @@ def isReleaseBuild() {
     return !version.contains("SNAPSHOT");
 }
 
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allJava
+    classifier = 'sources'
+}
+
+artifacts {
+    archives sourcesJar
+}
 
 publishing {
     publications {
         Annotation(MavenPublication) {
             artifactId 'coredata-compiler'
             from components.java
+            artifact(sourcesJar)
         }
     }
 }

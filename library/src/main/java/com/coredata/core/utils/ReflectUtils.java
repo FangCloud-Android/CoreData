@@ -55,6 +55,6 @@ public class ReflectUtils {
     }
 
     public static Type getGenericityType(Class aClass) {
-        return aClass.getGenericSuperclass();
+        return ((ParameterizedType) (aClass.getGenericSuperclass())).getActualTypeArguments()[0];
     }
 }
