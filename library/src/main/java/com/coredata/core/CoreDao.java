@@ -210,7 +210,7 @@ public abstract class CoreDao<T> {
      */
     protected boolean replace(T t, SQLiteDatabase db) {
         // 查找出 所有关联的对象对应的dao，以及所对应的dao
-        List<T> tList = new ArrayList<>();
+        ArrayList<T> tList = new ArrayList<>();
         tList.add(t);
         return replace(tList, db);
     }

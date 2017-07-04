@@ -1,12 +1,13 @@
 package com.coredata.core;
 
-import com.coredata.core.db.Where;
+import com.coredata.core.db.UpdateDeleteSetInterface;
+import com.coredata.core.db.UpdateDeleteWhere;
 
 /**
  * Created by wangjinpeng on 2017/6/27.
  */
 
-public class DeleteSet<T> extends BaseSet<T> {
+public class DeleteSet<T> extends BaseSet<T> implements UpdateDeleteSetInterface<T> {
 
     private final StringBuilder sqlBuilder;
 
@@ -22,22 +23,13 @@ public class DeleteSet<T> extends BaseSet<T> {
         return this;
     }
 
-    public Where<DeleteSet<T>> where(String columnName) {
-        sqlBuilder.append(" WHERE ");
-        return new Where<>(this, columnName);
-    }
-
-    public Where<DeleteSet<T>> andWhere(String columnName) {
-        sqlBuilder.append(" AND ");
-        return new Where<>(this, columnName);
-    }
-
-    public Where<DeleteSet<T>> orWhere(String columnName) {
-        sqlBuilder.append(" OR ");
-        return new Where<>(this, columnName);
-    }
-
+    @Override
     public boolean execute() {
         return getCoreDao().updateDeleteInternal(sqlBuilder.toString());
+    }
+
+    @Override
+    public UpdateDeleteWhere<UpdateDeleteSetInterface<T>, ? extends BaseSet<T>, T> where(String columnName) {
+        return new UpdateDeleteWhere<>(this, this, columnName);
     }
 }

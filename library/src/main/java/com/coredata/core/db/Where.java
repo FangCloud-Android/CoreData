@@ -1,31 +1,55 @@
 package com.coredata.core.db;
 
 import com.coredata.core.BaseSet;
-import com.coredata.core.UpdateSet;
 import com.coredata.utils.SqlUtils;
 
-public class Where<T extends BaseSet> {
+abstract class Where<SET extends BaseSet<T>, T> {
 
-    private final T t;
+    protected final SET set;
 
-    public Where(T t, String columnName) {
-        this.t = t;
-        t.append(columnName);
+    public Where(SET set, String columnName) {
+        this.set = set;
+        set.append(" WHERE ")
+                .append(columnName);
     }
 
-    public T eq(Object o) {
-        t.append(" = ")
+    public Where<SET, T> and(String columnName) {
+        set.append(" AND ");
+        set.append(columnName);
+        return this;
+    }
+
+    public Where<SET, T> or(String columnName) {
+        set.append(" OR ");
+        set.append(columnName);
+        return this;
+    }
+
+    /**
+     * 相等
+     *
+     * @param o
+     * @return
+     */
+    public Where<SET, T> eq(Object o) {
+        set.append(" = ")
                 .append(SqlUtils.formatValue(o));
-        return t;
+        return this;
     }
 
-    public T noteq(Object o) {
-        t.append(" <> ")
+    /**
+     * 不相等
+     *
+     * @param o
+     * @return
+     */
+    public Where<SET, T> noteq(Object o) {
+        set.append(" <> ")
                 .append(SqlUtils.formatValue(o));
-        return t;
+        return this;
     }
 
-    public T in(Object... values) {
+    public Where<SET, T> in(Object... values) {
         StringBuilder append = new StringBuilder();
         boolean isFirst = true;
         for (Object key : values) {
@@ -36,13 +60,13 @@ public class Where<T extends BaseSet> {
             }
             append.append(key);
         }
-        t.append(" IN (")
+        set.append(" IN (")
                 .append(append.toString())
                 .append(")");
-        return t;
+        return this;
     }
 
-    public T notIn(Object... values) {
+    public Where<SET, T> notIn(Object... values) {
         StringBuilder append = new StringBuilder();
         boolean isFirst = true;
         for (Object key : values) {
@@ -53,10 +77,10 @@ public class Where<T extends BaseSet> {
             }
             append.append(key);
         }
-        t.append(" NOT IN (")
+        set.append(" NOT IN (")
                 .append(append.toString())
                 .append(")");
-        return t;
+        return this;
     }
 
     /**
@@ -64,9 +88,9 @@ public class Where<T extends BaseSet> {
      *
      * @return
      */
-    public T isNull() {
-        t.append(" IS NULL");
-        return t;
+    public Where<SET, T> isNull() {
+        set.append(" IS NULL");
+        return this;
     }
 
     /**
@@ -74,9 +98,9 @@ public class Where<T extends BaseSet> {
      *
      * @return
      */
-    public T isNotNull() {
-        t.append(" IS NOT NULL");
-        return t;
+    public Where<SET, T> isNotNull() {
+        set.append(" IS NOT NULL");
+        return this;
     }
 
     /**
@@ -86,12 +110,12 @@ public class Where<T extends BaseSet> {
      * @param rv
      * @return
      */
-    public T between(Object lv, Object rv) {
-        t.append(String.format(
+    public Where<SET, T> between(Object lv, Object rv) {
+        set.append(String.format(
                 " BETWEEN %1$s AND %2$S",
                 SqlUtils.formatValue(lv),
                 SqlUtils.formatValue(rv)));
-        return t;
+        return this;
     }
 
     /**
@@ -100,9 +124,9 @@ public class Where<T extends BaseSet> {
      * @param value
      * @return
      */
-    public T gt(Object value) {
-        t.append(" > ").append(SqlUtils.formatValue(value));
-        return t;
+    public Where<SET, T> gt(Object value) {
+        set.append(" > ").append(SqlUtils.formatValue(value));
+        return this;
     }
 
     /**
@@ -111,9 +135,9 @@ public class Where<T extends BaseSet> {
      * @param value
      * @return
      */
-    public T gte(Object value) {
-        t.append(" >= ").append(SqlUtils.formatValue(value));
-        return t;
+    public Where<SET, T> gte(Object value) {
+        set.append(" >= ").append(SqlUtils.formatValue(value));
+        return this;
     }
 
     /**
@@ -122,9 +146,9 @@ public class Where<T extends BaseSet> {
      * @param value
      * @return
      */
-    public T lt(Object value) {
-        t.append(" < ").append(SqlUtils.formatValue(value));
-        return t;
+    public Where<SET, T> lt(Object value) {
+        set.append(" < ").append(SqlUtils.formatValue(value));
+        return this;
     }
 
     /**
@@ -133,9 +157,9 @@ public class Where<T extends BaseSet> {
      * @param value
      * @return
      */
-    public T lte(Object value) {
-        t.append(" <= ").append(SqlUtils.formatValue(value));
-        return t;
+    public Where<SET, T> lte(Object value) {
+        set.append(" <= ").append(SqlUtils.formatValue(value));
+        return this;
     }
 
     /**
@@ -144,8 +168,8 @@ public class Where<T extends BaseSet> {
      * @param expression
      * @return
      */
-    public T like(String expression) {
-        t.append(String.format(" <= '%s'", expression));
-        return t;
+    public Where<SET, T> like(String expression) {
+        set.append(String.format(" <= '%s'", expression));
+        return this;
     }
 }

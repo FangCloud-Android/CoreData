@@ -1,7 +1,7 @@
 package com.coredata.core;
 
 import com.coredata.core.db.Order;
-import com.coredata.core.db.Where;
+import com.coredata.core.db.QueryWhere;
 
 import java.util.List;
 
@@ -26,19 +26,12 @@ public class ResultSet<T> extends BaseSet<T> {
         return this;
     }
 
-    public Where<ResultSet<T>> where(String columnName) {
-        sqlBuilder.append(" WHERE ");
-        return new Where<>(this, columnName);
+    public List<T> result() {
+        return getCoreDao().querySqlInternal(sqlBuilder.toString());
     }
 
-    public Where<ResultSet<T>> andWhere(String columnName) {
-        sqlBuilder.append(" AND ");
-        return new Where<>(this, columnName);
-    }
-
-    public Where<ResultSet<T>> orWhere(String columnName) {
-        sqlBuilder.append(" OR ");
-        return new Where<>(this, columnName);
+    public QueryWhere<ResultSet<T>, T> where(String columnName) {
+        return new QueryWhere<>(this, columnName);
     }
 
     public ResultSet<T> groupBy(String expression) {
@@ -69,9 +62,5 @@ public class ResultSet<T> extends BaseSet<T> {
         sqlBuilder.append(" OFFSET ")
                 .append(String.valueOf(offset));
         return this;
-    }
-
-    public List<T> result() {
-        return getCoreDao().querySqlInternal(sqlBuilder.toString());
     }
 }

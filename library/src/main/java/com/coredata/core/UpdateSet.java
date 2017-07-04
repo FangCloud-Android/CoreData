@@ -1,12 +1,13 @@
 package com.coredata.core;
 
 import com.coredata.core.db.Update;
-import com.coredata.core.db.Where;
+import com.coredata.core.db.UpdateDeleteSetInterface;
+import com.coredata.core.db.UpdateDeleteWhere;
 
 /**
  * 更新Set
  */
-public class UpdateSet<T> extends BaseSet<T> {
+public class UpdateSet<T> extends BaseSet<T> implements UpdateDeleteSetInterface<T> {
 
     private final StringBuilder sqlBuilder;
 
@@ -22,32 +23,18 @@ public class UpdateSet<T> extends BaseSet<T> {
         return this;
     }
 
-    public Update<UpdateSet<T>> set(String columnName) {
-        sqlBuilder.append(" SET ");
-        return new Update<>(this, columnName);
-    }
-
-    public Update<UpdateSet<T>> andSet(String columnName) {
-        sqlBuilder.append(" AND ");
-        return new Update<>(this, columnName);
-    }
-
-    public Where<UpdateSet<T>> where(String columnName) {
-        sqlBuilder.append(" WHERE ");
-        return new Where<>(this, columnName);
-    }
-
-    public Where<UpdateSet<T>> andWhere(String columnName) {
-        sqlBuilder.append(" AND ");
-        return new Where<>(this, columnName);
-    }
-
-    public Where<UpdateSet<T>> orWhere(String columnName) {
-        sqlBuilder.append(" OR ");
-        return new Where<>(this, columnName);
-    }
-
+    @Override
     public boolean execute() {
         return getCoreDao().updateDeleteInternal(sqlBuilder.toString());
+    }
+
+    @Override
+    public UpdateDeleteWhere<UpdateDeleteSetInterface<T>, ? extends BaseSet<T>, T> where(String columnName) {
+        return new UpdateDeleteWhere<>(this, this, columnName);
+    }
+
+    public Update<T> set(String columnName) {
+        sqlBuilder.append(" SET ");
+        return new Update<>(this, columnName);
     }
 }

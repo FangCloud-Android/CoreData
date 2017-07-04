@@ -1,10 +1,12 @@
 package com.coredata.core;
 
+import com.coredata.core.db.SetInterface;
+
 /**
  * Created by wangjinpeng on 2017/6/27.
  */
 
-public abstract class BaseSet<T> {
+public class BaseSet<T> implements SetInterface<T>{
 
     private final CoreDao<T> coreDao;
 
@@ -16,5 +18,8 @@ public abstract class BaseSet<T> {
         return coreDao;
     }
 
-    public abstract BaseSet<T> append(String e);
+    @Override
+    public SetInterface<T> append(String e) {
+        return null;
+    }
 }
