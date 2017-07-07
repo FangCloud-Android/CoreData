@@ -9,23 +9,14 @@ import com.coredata.core.db.UpdateDeleteWhere;
 
 public class DeleteSet<T> extends BaseSet<T> implements UpdateDeleteSetInterface<T> {
 
-    private final StringBuilder sqlBuilder;
-
     DeleteSet(CoreDao<T> coreDao) {
         super(coreDao);
-        sqlBuilder = new StringBuilder()
-                .append("DELETE FROM ").append(coreDao.getTableName());
-    }
-
-    @Override
-    public DeleteSet<T> append(String e) {
-        sqlBuilder.append(e);
-        return this;
+        append("DELETE FROM ").append(coreDao.getTableName());
     }
 
     @Override
     public boolean execute() {
-        return getCoreDao().updateDeleteInternal(sqlBuilder.toString());
+        return getCoreDao().updateDeleteInternal(getSql());
     }
 
     @Override

@@ -12,22 +12,14 @@ import java.util.List;
  */
 public class ResultSet<T> extends BaseSet<T> {
 
-    private final StringBuilder sqlBuilder;
 
     ResultSet(CoreDao<T> coreDao) {
         super(coreDao);
-        sqlBuilder = new StringBuilder()
-                .append("SELECT * FROM ").append(coreDao.getTableName());
-    }
-
-    @Override
-    public ResultSet<T> append(String e) {
-        sqlBuilder.append(e);
-        return this;
+        append("SELECT * FROM ").append(coreDao.getTableName());
     }
 
     public List<T> result() {
-        return getCoreDao().querySqlInternal(sqlBuilder.toString());
+        return getCoreDao().querySqlInternal(getSql());
     }
 
     public QueryWhere<ResultSet<T>, T> where(String columnName) {
@@ -35,7 +27,7 @@ public class ResultSet<T> extends BaseSet<T> {
     }
 
     public ResultSet<T> groupBy(String expression) {
-        sqlBuilder.append(" GROUP BY ")
+        append(" GROUP BY ")
                 .append(expression);
         return this;
     }
@@ -45,7 +37,7 @@ public class ResultSet<T> extends BaseSet<T> {
     }
 
     public ResultSet<T> orderBy(String expression, Order order) {
-        sqlBuilder.append(" ORDER BY ")
+        append(" ORDER BY ")
                 .append(expression)
                 .append(" ")
                 .append(order.name());
@@ -53,13 +45,13 @@ public class ResultSet<T> extends BaseSet<T> {
     }
 
     public ResultSet<T> limit(int size) {
-        sqlBuilder.append(" LIMIT ")
+        append(" LIMIT ")
                 .append(String.valueOf(size));
         return this;
     }
 
     public ResultSet<T> offset(int offset) {
-        sqlBuilder.append(" OFFSET ")
+        append(" OFFSET ")
                 .append(String.valueOf(offset));
         return this;
     }

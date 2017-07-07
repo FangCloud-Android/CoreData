@@ -9,23 +9,14 @@ import com.coredata.core.db.UpdateDeleteWhere;
  */
 public class UpdateSet<T> extends BaseSet<T> implements UpdateDeleteSetInterface<T> {
 
-    private final StringBuilder sqlBuilder;
-
     UpdateSet(CoreDao<T> coreDao) {
         super(coreDao);
-        sqlBuilder = new StringBuilder()
-                .append("UPDATE ").append(coreDao.getTableName());
-    }
-
-    @Override
-    public UpdateSet<T> append(String e) {
-        sqlBuilder.append(e);
-        return this;
+        append("UPDATE ").append(coreDao.getTableName());
     }
 
     @Override
     public boolean execute() {
-        return getCoreDao().updateDeleteInternal(sqlBuilder.toString());
+        return getCoreDao().updateDeleteInternal(getSql());
     }
 
     @Override
@@ -34,7 +25,7 @@ public class UpdateSet<T> extends BaseSet<T> implements UpdateDeleteSetInterface
     }
 
     public Update<T> set(String columnName) {
-        sqlBuilder.append(" SET ");
+        append(" SET ");
         return new Update<>(this, columnName);
     }
 }

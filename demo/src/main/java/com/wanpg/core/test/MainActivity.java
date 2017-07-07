@@ -1,5 +1,6 @@
 package com.wanpg.core.test;
 
+import android.content.ContentValues;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -7,6 +8,7 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.coredata.core.CoreDao;
 import com.coredata.core.CoreData;
 import com.wanpg.core.test.model.Author;
 import com.wanpg.core.test.model.Book;
@@ -103,6 +105,13 @@ public class MainActivity extends AppCompatActivity {
     private int queryIndex = 0;
 
     public void queryBookAndDisplayClick(View view) {
+        ContentValues result = CoreData.defaultInstance().dao(Book.class)
+                .func()
+                .count()
+                .result();
+
+        Log.d("wanpg", "所有书的总数" + result.getAsInteger(CoreDao.RESULT_COUNT));
+
         queryIndex++;
         Log.d("wanpg", "开始读取一本书");
         long start1 = System.currentTimeMillis();

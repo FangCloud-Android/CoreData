@@ -24,6 +24,12 @@ import java.util.List;
  */
 public abstract class CoreDao<T> {
 
+    public static final String RESULT_COUNT = "result_count";
+    public static final String RESULT_MAX = "result_max";
+    public static final String RESULT_MIN = "result_min";
+    public static final String RESULT_AVG = "result_avg";
+    public static final String RESULT_SUM = "result_sum";
+
     private static final Object lock = new Object();
     private SQLiteOpenHelper dbHelper;
 
@@ -351,6 +357,26 @@ public abstract class CoreDao<T> {
     }
 
     /**
+     * 根据给定的条件进行查询
+     *
+     * @param sql sql语句
+     * @return 实体对象List
+     */
+    public Cursor querySqlCursor(String sql) {
+        synchronized (lock) {
+            Log.d("CoreData", "CoreDao--querySqlInternal--sql:" + sql);
+            SQLiteDatabase db;
+            try {
+                db = dbHelper.getReadableDatabase();
+                return db.rawQuery(sql, null);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    }
+
+    /**
      * 删除全部
      *
      * @return 是否删除成功
@@ -415,11 +441,20 @@ public abstract class CoreDao<T> {
     }
 
     /**
+     * 函数功能
+     *
+     * @return 函数操作集
+     */
+    public FuncSet<T> func() {
+        return new FuncSet<>(this);
+    }
+
+    /**
      * 关闭游标
      *
      * @param cursor 游标
      */
-    private void closeCursor(Cursor cursor) {
+    void closeCursor(Cursor cursor) {
         try {
             if (cursor != null) {
                 cursor.close();
