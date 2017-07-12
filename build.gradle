@@ -17,11 +17,16 @@ ext {
     VERSION = '0.0.10-SNAPSHOT'
 
     TEST_REPO = '../repo'
-    RELEASE_URL = ''
-    SNAPSHOT_URL = ''
-    NAME = ''
-    PASSWORD = ''
-    TEST = true
+
+    Properties properties = new Properties()
+    properties.load(project.rootProject.file('maven.properties').newDataInputStream())
+
+    RELEASE_URL = properties.getProperty("RELEASE_URL")
+    SNAPSHOT_URL = properties.getProperty("SNAPSHOT_URL")
+    USER_NAME = properties.getProperty("USER_NAME")
+    PASSWORD = properties.getProperty("PASSWORD")
+
+    TEST = false
 }
 
 allprojects {

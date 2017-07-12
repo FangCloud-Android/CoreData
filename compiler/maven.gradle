@@ -55,6 +55,10 @@ publishing {
         } else {
             maven {
                 url SNAPSHOT_URL
+                credentials {
+                    username = USER_NAME
+                    password = PASSWORD
+                }
             }
         }
     }

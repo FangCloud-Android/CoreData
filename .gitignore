@@ -41,3 +41,5 @@ captures/
 *.jks
 
 repo/
+
+maven.properties
