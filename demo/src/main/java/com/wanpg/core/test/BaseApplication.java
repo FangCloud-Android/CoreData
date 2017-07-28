@@ -22,7 +22,8 @@ public class BaseApplication extends Application {
     public void onCreate() {
         super.onCreate();
         CoreData.init(this, CoreData.Builder.builder()
-                .name(getExternalCacheDir() + File.separator + "test.db")
+//                .name(getExternalCacheDir() + File.separator + "test.db")
+                .name(getExternalCacheDir() + File.separator + "test_nopwd.db")
                 .register(
                         Book.class,
                         Author.class,
@@ -39,6 +40,8 @@ public class BaseApplication extends Application {
                         return null;
                     }
                 })
-                .version(13));
+                .version(13)
+//                .password("123456")
+        );
     }
 }

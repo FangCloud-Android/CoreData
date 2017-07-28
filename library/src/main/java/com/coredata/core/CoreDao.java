@@ -4,11 +4,10 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.SQLException;
-import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
-import android.database.sqlite.SQLiteStatement;
 import android.util.Log;
 
+import com.coredata.core.db.CoreDatabase;
+import com.coredata.core.db.CoreStatement;
 import com.coredata.db.DbProperty;
 import com.coredata.db.Property;
 import com.coredata.utils.SqlUtils;
@@ -31,25 +30,25 @@ public abstract class CoreDao<T> {
     public static final String RESULT_SUM = "result_sum";
 
     private static final Object lock = new Object();
-    private SQLiteOpenHelper dbHelper;
+    private CoreDatabaseManager cdbManager;
 
     /**
      * 数据库创建
      *
-     * @param db {@link SQLiteOpenHelper#onCreate(SQLiteDatabase)}
+     * @param db {@link CoreDatabaseManager#onCreate(CoreDatabase)}
      */
-    void onDataBaseCreate(SQLiteDatabase db) {
+    void onDataBaseCreate(CoreDatabase db) {
         db.execSQL(getCreateTableSql());
     }
 
     /**
      * 数据库升级
      *
-     * @param db         {@link SQLiteOpenHelper#onUpgrade(SQLiteDatabase, int, int)}
+     * @param db         {@link CoreDatabaseManager#onUpgrade(CoreDatabase, int, int)}
      * @param oldVersion 老版本
      * @param newVersion 新版本
      */
-    void onDataBaseUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    void onDataBaseUpgrade(CoreDatabase db, int oldVersion, int newVersion) {
         synchronized (lock) {
             List<DbProperty> dbProperties = new ArrayList<>();
             Cursor cursor = null;
@@ -168,11 +167,11 @@ public abstract class CoreDao<T> {
     /**
      * 数据库降级
      *
-     * @param db         {@link SQLiteOpenHelper#onDowngrade(SQLiteDatabase, int, int)}
+     * @param db         {@link CoreDatabaseManager#onDowngrade(CoreDatabase, int, int)}
      * @param oldVersion 老版本
      * @param newVersion 新版本
      */
-    void onDataBaseDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    void onDataBaseDowngrade(CoreDatabase db, int oldVersion, int newVersion) {
         db.execSQL(SqlUtils.getDropTableSql(getTableName()));
         onDataBaseCreate(db);
     }
@@ -180,10 +179,10 @@ public abstract class CoreDao<T> {
     /**
      * 数据库创建
      *
-     * @param dbHelper 数据库管理类
+     * @param cdbManager 数据库管理类
      */
-    protected void onCreate(SQLiteOpenHelper dbHelper) {
-        this.dbHelper = dbHelper;
+    protected void onCreate(CoreDatabaseManager cdbManager) {
+        this.cdbManager = cdbManager;
     }
 
     protected abstract String getTableName();
@@ -201,49 +200,49 @@ public abstract class CoreDao<T> {
      */
     protected abstract String getInsertSql();
 
-    protected abstract void bindStatement(SQLiteStatement statement, T t);
+    protected abstract void bindStatement(CoreStatement statement, T t);
 
-    protected abstract boolean replaceInternal(Collection<T> tCollection, SQLiteDatabase db);
+    protected abstract boolean replaceInternal(Collection<T> tCollection, CoreDatabase db);
 
     protected abstract List<T> bindCursor(Cursor cursor);
 
     /**
      * 单条数据插入 内部使用
      *
-     * @param t  实体对象
-     * @param db SQLiteDatabase对象
+     * @param t   实体对象
+     * @param cdb SQLiteDatabase对象
      * @return 是否插入成功
      */
-    protected boolean replace(T t, SQLiteDatabase db) {
+    protected boolean replace(T t, CoreDatabase cdb) {
         // 查找出 所有关联的对象对应的dao，以及所对应的dao
         ArrayList<T> tList = new ArrayList<>();
         tList.add(t);
-        return replace(tList, db);
+        return replace(tList, cdb);
     }
 
     /**
      * 插入集合数据, 内部使用
      *
      * @param tCollection 实体集合
-     * @param db          SQLiteDatabase对象
+     * @param cdb         SQLiteDatabase对象
      * @return 是否插入成功
      */
-    public boolean replace(Collection<T> tCollection, SQLiteDatabase db) {
-        return replaceInternal(tCollection, db);
+    public boolean replace(Collection<T> tCollection, CoreDatabase cdb) {
+        return replaceInternal(tCollection, cdb);
     }
 
     /**
      * 绑定数据并提交插入, 内部使用
      *
      * @param tList 实例List
-     * @param db    SQLiteDatabase对象
+     * @param cdb   SQLiteDatabase对象
      * @return 是否插入成功
      */
-    protected boolean executeInsert(List<T> tList, SQLiteDatabase db) {
-        SQLiteStatement statement = db.compileStatement(getInsertSql());
+    protected boolean executeInsert(List<T> tList, CoreDatabase cdb) {
+        CoreStatement cs = cdb.compileStatement(getInsertSql());
         for (T t : tList) {
-            bindStatement(statement, t);
-            statement.executeInsert();
+            bindStatement(cs, t);
+            cs.executeInsert();
         }
         return true;
     }
@@ -259,11 +258,11 @@ public abstract class CoreDao<T> {
             return false;
         }
         synchronized (lock) {
-            SQLiteDatabase db = dbHelper.getWritableDatabase();
-            db.beginTransaction();
-            replace(t, db);
-            db.setTransactionSuccessful();
-            db.endTransaction();
+            CoreDatabase cdb = cdbManager.getWritableDatabase();
+            cdb.beginTransaction();
+            replace(t, cdb);
+            cdb.setTransactionSuccessful();
+            cdb.endTransaction();
         }
         return true;
     }
@@ -276,11 +275,11 @@ public abstract class CoreDao<T> {
      */
     public boolean replace(Collection<T> tCollection) {
         synchronized (lock) {
-            SQLiteDatabase db = dbHelper.getWritableDatabase();
-            db.beginTransaction();
-            replace(tCollection, db);
-            db.setTransactionSuccessful();
-            db.endTransaction();
+            CoreDatabase cdb = cdbManager.getWritableDatabase();
+            cdb.beginTransaction();
+            replace(tCollection, cdb);
+            cdb.setTransactionSuccessful();
+            cdb.endTransaction();
         }
         return true;
     }
@@ -301,7 +300,7 @@ public abstract class CoreDao<T> {
      * @return 实体对象，可能为null
      */
     public T queryByKey(Object key) {
-        List<T> tList = queryByKeys(key);
+        List<T> tList = queryByKeys(new Object[]{key});
         if (tList != null && !tList.isEmpty()) {
             return tList.get(0);
         }
@@ -314,7 +313,7 @@ public abstract class CoreDao<T> {
      * @param keys 主键values
      * @return 实体对象List
      */
-    public List<T> queryByKeys(Object... keys) {
+    public List<T> queryByKeys(Object[] keys) {
         if (keys == null || keys.length <= 0) {
             return new ArrayList<>();
         }
@@ -332,11 +331,11 @@ public abstract class CoreDao<T> {
     List<T> querySqlInternal(String sql) {
         synchronized (lock) {
             Log.d("CoreData", "CoreDao--querySqlInternal--sql:" + sql);
-            SQLiteDatabase db;
+            CoreDatabase cdb;
             Cursor cursor = null;
             try {
-                db = dbHelper.getReadableDatabase();
-                cursor = db.rawQuery(sql, null);
+                cdb = cdbManager.getReadableDatabase();
+                cursor = cdb.rawQuery(sql, null);
                 return bindCursor(cursor);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -365,10 +364,10 @@ public abstract class CoreDao<T> {
     public Cursor querySqlCursor(String sql) {
         synchronized (lock) {
             Log.d("CoreData", "CoreDao--querySqlInternal--sql:" + sql);
-            SQLiteDatabase db;
+            CoreDatabase cdb;
             try {
-                db = dbHelper.getReadableDatabase();
-                return db.rawQuery(sql, null);
+                cdb = cdbManager.getReadableDatabase();
+                return cdb.rawQuery(sql, null);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -403,7 +402,7 @@ public abstract class CoreDao<T> {
      * @param keys 主键value列表
      * @return 是否删除成功
      */
-    public boolean deleteByKeys(Object... keys) {
+    public boolean deleteByKeys(Object[] keys) {
         if (keys == null || keys.length <= 0) {
             return false;
         }
@@ -434,9 +433,9 @@ public abstract class CoreDao<T> {
     boolean updateDeleteInternal(String sql) {
         synchronized (lock) {
             Log.d("CoreData", "CoreDao--updateDeleteInternal--sql:" + sql);
-            SQLiteDatabase db = dbHelper.getWritableDatabase();
-            SQLiteStatement s = db.compileStatement(sql);
-            return s.executeUpdateDelete() > 0;
+            CoreDatabase cdb = cdbManager.getWritableDatabase();
+            CoreStatement cs = cdb.compileStatement(sql);
+            return cs.executeUpdateDelete() > 0;
         }
     }
 

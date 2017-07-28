@@ -23,6 +23,7 @@ dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile project(':annotations')
     compile project(':base')
+    compile 'net.zetetic:android-database-sqlcipher:3.5.7@aar'
 }
 
 apply from: 'maven.gradle'

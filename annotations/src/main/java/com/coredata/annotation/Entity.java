@@ -18,4 +18,11 @@ public @interface Entity {
      * @return tableName
      */
     String tableName() default "";
+
+    /**
+     * 这里指定当前表的主键列名，此处设置后会忽略{@link PrimaryKey}
+     *
+     * @return 主键列名
+     */
+    String primaryKey() default "";
 }

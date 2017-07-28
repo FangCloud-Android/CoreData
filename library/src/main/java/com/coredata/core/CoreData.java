@@ -20,6 +20,7 @@ public class CoreData {
         private String name;
         private int version;
         private JSONAdapter jsonAdapter;
+        private String password;
 
         public static Builder builder() {
             return new Builder();
@@ -46,6 +47,11 @@ public class CoreData {
 
         public Builder registerJSONAdapter(JSONAdapter jsonAdapter) {
             this.jsonAdapter = jsonAdapter;
+            return this;
+        }
+
+        public Builder password(String password) {
+            this.password = password;
             return this;
         }
     }
@@ -82,11 +88,7 @@ public class CoreData {
         return instance;
     }
 
-
-    /**
-     * 数据库对象实例
-     */
-    private CoreDataBaseHelper dataBaseHelper;
+    private CoreDatabaseManager coreDataBaseManager;
 
     private HashMap<Class, CoreDao> coreDaoHashMap = new HashMap<>();
 
@@ -110,13 +112,14 @@ public class CoreData {
         for (Class<?> entityClass : builder.coreObjectTypeList) {
             coreDaoHashMap.put(entityClass, initializeDao(entityClass));
         }
-        dataBaseHelper = new CoreDataBaseHelper(
+        coreDataBaseManager = new CoreDatabaseManager(
                 application,
                 builder.name,
                 builder.version,
-                coreDaoHashMap);
+                coreDaoHashMap,
+                builder.password);
         for (Map.Entry<Class, CoreDao> entry : coreDaoHashMap.entrySet()) {
-            entry.getValue().onCreate(dataBaseHelper);
+            entry.getValue().onCreate(coreDataBaseManager);
         }
     }
 
@@ -127,5 +130,9 @@ public class CoreData {
 
     public static JSONAdapter getJSONAdapter() {
         return defaultInstance().builder.jsonAdapter;
+    }
+
+    public final CoreDatabaseManager getCoreDataBase() {
+        return coreDataBaseManager;
     }
 }

@@ -43,9 +43,9 @@ public final class EntityProcessor extends AbstractProcessor {
     public static final ClassName classCoreDao = ClassName.bestGuess("com.coredata.core.CoreDao");
     public static final ClassName classCoreData = ClassName.bestGuess("com.coredata.core.CoreData");
     public static final ClassName classCoreProperty = ClassName.get(Property.class);
-    public static final ClassName classSQLiteOpenHelper = ClassName.bestGuess("android.database.sqlite.SQLiteOpenHelper");
-    public static final ClassName classSQLiteStatement = ClassName.bestGuess("android.database.sqlite.SQLiteStatement");
-    public static final ClassName classSQLiteDatabase = ClassName.bestGuess("android.database.sqlite.SQLiteDatabase");
+    public static final ClassName classSQLiteOpenHelper = ClassName.bestGuess("com.coredata.core.CoreDatabaseManager");
+    public static final ClassName classSQLiteStatement = ClassName.bestGuess("com.coredata.core.db.CoreStatement");
+    public static final ClassName classSQLiteDatabase = ClassName.bestGuess("com.coredata.core.db.CoreDatabase");
     public static final ClassName classCursor = ClassName.bestGuess("android.database.Cursor");
 
     @Override
@@ -74,11 +74,16 @@ public final class EntityProcessor extends AbstractProcessor {
         // 表名
         String tableName;
 
+        // Entity注解带的primaryKey的value
+        String entityPrimaryKey;
+
         Entity entity = element.getAnnotation(Entity.class);
         tableName = entity.tableName();
         if (TextUtils.isEmpty(tableName)) {
             tableName = entityName;
         }
+        entityPrimaryKey = entity.primaryKey();
+
         ClassName classEntity = ClassName.bestGuess(element.asType().toString());
 
         List<Element> elementsForDb = Utils.getElementsForDb(elementUtils, element);
@@ -99,8 +104,9 @@ public final class EntityProcessor extends AbstractProcessor {
         // 3、找出所有关联对象 @Relation，并生成对应的dao 类似 __AuthorCoreDao ok
         // 4、onCreate方法，初始化 关联对象对应的 dao ok
         // 5、getInsertSql， 返回插入的sql语句 ok
-        // 6、
+        // 6、getCreateTableSql，返回建表语句
         // 7、getTableProperties，返回所有的表结构
+        // 8、绑定数据
 
         // dao的java名字
         String daoName = String.format(daoNameFormat, entityName);
@@ -121,8 +127,8 @@ public final class EntityProcessor extends AbstractProcessor {
         MethodSpec.Builder onCreateMethodBuilder = MethodSpec.methodBuilder("onCreate")
                 .addModifiers(Modifier.PROTECTED)
                 .returns(void.class)
-                .addParameter(classSQLiteOpenHelper, "dbHelper")
-                .addStatement("super.onCreate($N)", "dbHelper");
+                .addParameter(classSQLiteOpenHelper, "cdbManager")
+                .addStatement("super.onCreate($N)", "cdbManager");
         for (Element relationElement : relationElements) {
             TypeMirror typeMirror = relationElement.asType();
             ClassName classRelation =
@@ -146,7 +152,7 @@ public final class EntityProcessor extends AbstractProcessor {
 
         MethodSpec onCreateMethod = onCreateMethodBuilder.build();
 
-        // getInsertSql 方法，用来获取插入语句
+        // getCreateTableSql 方法，用来获取建表语句
         MethodSpec getCreateTableSqlMethod = MethodSpec.methodBuilder("getCreateTableSql")
                 .addModifiers(Modifier.PROTECTED)
                 .returns(String.class)
@@ -163,22 +169,27 @@ public final class EntityProcessor extends AbstractProcessor {
         // bindStatement 用来绑定数据
         MethodSpec bindStatementMethod = new BindStatementMethod(processingEnv, element).build();
 
+        // replaceInternal 方法，用来处理关系型数据
         MethodSpec replaceInternalMethod = new ReplaceInternalMethod(processingEnv, element).build();
 
+        // 创建 getTableName 方法，返回tableName
         MethodSpec getTableNameMethod = MethodSpec.methodBuilder("getTableName")
                 .addModifiers(Modifier.PROTECTED)
                 .returns(String.class)
                 .addStatement("return $S", tableName)
                 .build();
 
+        // 创建 getPrimaryKeyName 方法，返回 主键的名字
         MethodSpec getPrimaryKeyNameMethod = MethodSpec.methodBuilder("getPrimaryKeyName")
                 .addModifiers(Modifier.PROTECTED)
                 .returns(String.class)
                 .addStatement("return $S", Utils.getColumnName(primaryKeyElement))
                 .build();
 
+        // 创建 bindCursor 方法，绑定游标数据到模型
         MethodSpec bindCursorMethod = new BindCursorMethod(processingEnv, element).build();
 
+        // 创建 getTableProperties 方法，返回所有字段相关的 Property
         ParameterizedTypeName listPropertyType = ParameterizedTypeName.get(ClassName.get(ArrayList.class), classCoreProperty);
         MethodSpec.Builder getTablePropertiesBuilder =
                 MethodSpec.methodBuilder("getTableProperties")
