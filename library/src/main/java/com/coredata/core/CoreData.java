@@ -13,7 +13,7 @@ import java.util.Map;
  * Created by wangjinpeng on 2017/6/3.
  */
 
-public class CoreData {
+public final class CoreData {
 
     public static class Builder {
         private ArrayList<Class<?>> coreObjectTypeList;
@@ -132,7 +132,7 @@ public class CoreData {
         return defaultInstance().builder.jsonAdapter;
     }
 
-    public final CoreDatabaseManager getCoreDataBase() {
+    public CoreDatabaseManager getCoreDataBase() {
         return coreDataBaseManager;
     }
 }

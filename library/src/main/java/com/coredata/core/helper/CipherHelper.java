@@ -12,7 +12,7 @@ import net.sqlcipher.database.SQLiteDatabaseHook;
 import net.sqlcipher.database.SQLiteOpenHelper;
 
 /**
- * CoreData绑定Sqlite3的Helper
+ * CoreData绑定sqlcipher的Helper
  *
  * @author wangjinpeng
  */
@@ -40,6 +40,5 @@ public class CipherHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         CoreDatabaseManager cdbManager = CoreData.defaultInstance().getCoreDataBase();
         cdbManager.onUpgrade(new CoreDatabase(db), oldVersion, newVersion);
-
     }
 }
