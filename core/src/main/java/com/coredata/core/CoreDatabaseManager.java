@@ -5,11 +5,9 @@ import android.database.Cursor;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.coredata.core.helper.CipherHelper;
+import com.coredata.core.normal.NormalOpenHelper;
 import com.coredata.core.db.CoreDatabase;
-import com.coredata.core.helper.NormalHelper;
-
-import net.sqlcipher.database.SQLiteDatabase;
+import com.coredata.core.db.OpenHelperInterface;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,10 +21,10 @@ import java.util.Map;
 public class CoreDatabaseManager {
 
     private final Map<Class, CoreDao> coreDaoHashMap;
-    private final String password;
 
-    private android.database.sqlite.SQLiteOpenHelper normalHelper;
-    private net.sqlcipher.database.SQLiteOpenHelper cipherHelper;
+    private OpenHelperInterface openHelper;
+
+    private static final String CIPHER_HELPER_CLASS = "com.coredata.cipher.CipherOpenHelper";
 
     public CoreDatabaseManager(Context context,
                                String name,
@@ -34,29 +32,32 @@ public class CoreDatabaseManager {
                                HashMap<Class, CoreDao> coreDaoHashMap,
                                String password) {
         this.coreDaoHashMap = coreDaoHashMap;
-        this.password = password;
         if (TextUtils.isEmpty(password)) {
-            normalHelper = new NormalHelper(context, name, null, version);
+            openHelper = new NormalOpenHelper(context, name, version);
         } else {
-            SQLiteDatabase.loadLibs(context);
-            cipherHelper = new CipherHelper(context, name, null, version);
+            Class<?> aClass = null;
+            try {
+                aClass = Class.forName(CIPHER_HELPER_CLASS);
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+                throw new IllegalStateException("if you want to use sqlite by password, you must dependencies coredata-cipher");
+            }
+            try {
+                openHelper = (OpenHelperInterface) aClass.getConstructor(Context.class, String.class, int.class, String.class)
+                        .newInstance(context, name, version, password);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new IllegalStateException("if you want to use sqlite by password, you must dependencies coredata-cipher");
+            }
         }
     }
 
     public CoreDatabase getWritableDatabase() {
-        if (TextUtils.isEmpty(password)) {
-            return new CoreDatabase(normalHelper.getWritableDatabase());
-        } else {
-            return new CoreDatabase(cipherHelper.getWritableDatabase(password));
-        }
+        return openHelper.getWritableCoreDatabase();
     }
 
     public CoreDatabase getReadableDatabase() {
-        if (TextUtils.isEmpty(password)) {
-            return new CoreDatabase(normalHelper.getReadableDatabase());
-        } else {
-            return new CoreDatabase(cipherHelper.getReadableDatabase(password));
-        }
+        return openHelper.getReadableCoreDatabase();
     }
 
     public void onCreate(CoreDatabase cdb) {

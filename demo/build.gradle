@@ -32,6 +32,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
     provided 'org.projectlombok:lombok:1.16.16'
     provided 'javax.annotation:javax.annotation-api:1.2'
-    compile project(':library')
+    compile project(':core')
     annotationProcessor project(':compiler')
+    compile project(':cipher')
 }
