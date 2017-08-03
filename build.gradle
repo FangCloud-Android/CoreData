@@ -14,7 +14,7 @@ buildscript {
 
 ext {
     GROUP = 'com.coredata'
-    VERSION = '0.0.10-SNAPSHOT'
+    VERSION = '0.0.11-SNAPSHOT'
 
     TEST_REPO = '../repo'
 
@@ -26,7 +26,7 @@ ext {
     USER_NAME = properties.getProperty("USER_NAME")
     PASSWORD = properties.getProperty("PASSWORD")
 
-    TEST = true
+    DEBUG = false
 }
 
 allprojects {

@@ -44,13 +44,13 @@ public class FuncWhere<SET extends FuncSet<T>, T> extends Where<SET, T> {
     }
 
     @Override
-    public FuncWhere<SET, T> in(Object... values) {
+    public FuncWhere<SET, T> in(Object[] values) {
         super.in(values);
         return this;
     }
 
     @Override
-    public FuncWhere<SET, T> notIn(Object... values) {
+    public FuncWhere<SET, T> notIn(Object[] values) {
         super.notIn(values);
         return this;
     }

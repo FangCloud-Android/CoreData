@@ -57,7 +57,7 @@ publishing {
 publishing {
     repositories {
         //指定项目部署到的中央库地址，UserName和Password就是Part 1中注册的账号。
-        if (TEST) {
+        if (DEBUG) {
             maven {
                 url TEST_REPO
             }

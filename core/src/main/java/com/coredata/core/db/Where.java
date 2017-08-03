@@ -49,7 +49,7 @@ abstract class Where<SET extends BaseSet<T>, T> {
         return this;
     }
 
-    public Where<SET, T> in(Object... values) {
+    public Where<SET, T> in(Object[] values) {
         StringBuilder append = new StringBuilder();
         boolean isFirst = true;
         for (Object key : values) {
@@ -66,7 +66,7 @@ abstract class Where<SET extends BaseSet<T>, T> {
         return this;
     }
 
-    public Where<SET, T> notIn(Object... values) {
+    public Where<SET, T> notIn(Object[] values) {
         StringBuilder append = new StringBuilder();
         boolean isFirst = true;
         for (Object key : values) {

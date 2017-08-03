@@ -6,10 +6,10 @@ import com.coredata.annotation.Embedded;
 import com.coredata.annotation.Entity;
 import com.coredata.annotation.PrimaryKey;
 import com.coredata.annotation.Relation;
-import com.coredata.core.converter.JSONConverter;
 import com.coredata.core.converter.SerializableConverter;
 import com.coredata.core.converter.SerializableListConverter;
 import com.coredata.core.converter.StringArrayConverter;
+import com.coredata.core.converter.StringListConverter;
 
 import java.util.List;
 
@@ -50,7 +50,7 @@ public class Book {
     @Embedded
     public Desc desc;
 
-    @Convert(converter = JSONConverter.class, dbType = String.class)
+    @Convert(converter = StringListConverter.class, dbType = String.class)
     public List<String> testList;
 
     String tag1;

@@ -59,13 +59,13 @@ public class QueryWhere<SET extends ResultSet<T>, T> extends Where<SET, T> {
     }
 
     @Override
-    public QueryWhere<SET, T> in(Object... values) {
+    public QueryWhere<SET, T> in(Object[] values) {
         super.in(values);
         return this;
     }
 
     @Override
-    public QueryWhere<SET, T> notIn(Object... values) {
+    public QueryWhere<SET, T> notIn(Object[] values) {
         super.notIn(values);
         return this;
     }

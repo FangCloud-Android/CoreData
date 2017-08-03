@@ -44,13 +44,13 @@ public class UpdateDeleteWhere<SI extends UpdateDeleteSetInterface<T>, SET exten
     }
 
     @Override
-    public UpdateDeleteWhere<SI, SET, T> in(Object... values) {
+    public UpdateDeleteWhere<SI, SET, T> in(Object[] values) {
         super.in(values);
         return this;
     }
 
     @Override
-    public UpdateDeleteWhere<SI, SET, T> notIn(Object... values) {
+    public UpdateDeleteWhere<SI, SET, T> notIn(Object[] values) {
         super.notIn(values);
         return this;
     }
