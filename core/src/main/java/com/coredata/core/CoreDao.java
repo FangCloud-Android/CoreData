@@ -300,7 +300,9 @@ public abstract class CoreDao<T> {
      * @return 实体对象，可能为null
      */
     public T queryByKey(Object key) {
-        List<T> tList = queryByKeys(new Object[]{key});
+        List<T> tList = query()
+                .where(getPrimaryKeyName()).eq(key)
+                .result();
         if (tList != null && !tList.isEmpty()) {
             return tList.get(0);
         }

@@ -52,13 +52,13 @@ abstract class Where<SET extends BaseSet<T>, T> {
     public Where<SET, T> in(Object[] values) {
         StringBuilder append = new StringBuilder();
         boolean isFirst = true;
-        for (Object key : values) {
+        for (Object val : values) {
             if (isFirst) {
                 isFirst = false;
             } else {
                 append.append(",");
             }
-            append.append(key);
+            append.append(SqlUtils.formatValue(val));
         }
         set.append(" IN (")
                 .append(append.toString())
@@ -69,13 +69,13 @@ abstract class Where<SET extends BaseSet<T>, T> {
     public Where<SET, T> notIn(Object[] values) {
         StringBuilder append = new StringBuilder();
         boolean isFirst = true;
-        for (Object key : values) {
+        for (Object val : values) {
             if (isFirst) {
                 isFirst = false;
             } else {
                 append.append(",");
             }
-            append.append(key);
+            append.append(SqlUtils.formatValue(val));
         }
         set.append(" NOT IN (")
                 .append(append.toString())
