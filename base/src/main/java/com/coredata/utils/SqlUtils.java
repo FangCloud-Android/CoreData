@@ -52,4 +52,8 @@ public class SqlUtils {
         }
         return object.toString();
     }
+
+    public static String formatColumnName(String columnName) {
+        return "`" + columnName + "`";
+    }
 }

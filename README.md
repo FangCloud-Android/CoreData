@@ -7,10 +7,15 @@
 
 从名字可以看出，取名自IOS的CoreData数据库。希望能够支持Relation，并能在保证速度不会差距很大的情况下方便简单的使用。
 
-
 ##### 版本
-> 0.0.10-SNAPSHOT
 
+>0.0.13-SNAPSHOT
+
+```
+1、修复在columnName为index等sql特殊字段时候生成sql语法错误的问题
+```
+
+> 0.0.10-SNAPSHOT
 ##### 工程分析
 
 ```

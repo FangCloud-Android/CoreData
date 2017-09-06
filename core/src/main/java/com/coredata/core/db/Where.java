@@ -15,13 +15,13 @@ abstract class Where<SET extends BaseSet<T>, T> {
 
     public Where<SET, T> and(String columnName) {
         set.append(" AND ");
-        set.append(columnName);
+        set.append(SqlUtils.formatColumnName(columnName));
         return this;
     }
 
     public Where<SET, T> or(String columnName) {
         set.append(" OR ");
-        set.append(columnName);
+        set.append(SqlUtils.formatColumnName(columnName));
         return this;
     }
 

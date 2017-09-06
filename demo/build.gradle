@@ -34,5 +34,6 @@ dependencies {
     provided 'javax.annotation:javax.annotation-api:1.2'
     compile project(':core')
     annotationProcessor project(':compiler')
-    compile project(':cipher')
+//    compile project(':cipher')
+    compile project(':core')
 }

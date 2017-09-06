@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.DatabaseUtils;
 
 import com.coredata.core.db.FuncWhere;
+import com.coredata.utils.SqlUtils;
 
 /**
  * 函数集
@@ -74,7 +75,7 @@ public class FuncSet<T> extends BaseSet<T> {
      * @return
      */
     public FuncSet<T> max(String columnName) {
-        appendFunc(String.format(" max(%s)", columnName), CoreDao.RESULT_MAX);
+        appendFunc(String.format(" max(%s)", SqlUtils.formatColumnName(columnName)), CoreDao.RESULT_MAX);
         return this;
     }
 
@@ -85,7 +86,7 @@ public class FuncSet<T> extends BaseSet<T> {
      * @return
      */
     public FuncSet<T> min(String columnName) {
-        appendFunc(String.format(" min(%s)", columnName), CoreDao.RESULT_MIN);
+        appendFunc(String.format(" min(%s)", SqlUtils.formatColumnName(columnName)), CoreDao.RESULT_MIN);
         return this;
     }
 
@@ -96,7 +97,7 @@ public class FuncSet<T> extends BaseSet<T> {
      * @return
      */
     public FuncSet<T> avg(String columnName) {
-        appendFunc(String.format(" avg(%s)", columnName), CoreDao.RESULT_AVG);
+        appendFunc(String.format(" avg(%s)", SqlUtils.formatColumnName(columnName)), CoreDao.RESULT_AVG);
         return this;
     }
 
@@ -107,7 +108,7 @@ public class FuncSet<T> extends BaseSet<T> {
      * @return
      */
     public FuncSet<T> sum(String columnName) {
-        appendFunc(String.format(" sum(%s)", columnName), CoreDao.RESULT_SUM);
+        appendFunc(String.format(" sum(%s)", SqlUtils.formatColumnName(columnName)), CoreDao.RESULT_SUM);
         return this;
     }
 
