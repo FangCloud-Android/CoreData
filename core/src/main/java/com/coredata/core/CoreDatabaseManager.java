@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.coredata.core.db.Migration;
 import com.coredata.core.normal.NormalOpenHelper;
 import com.coredata.core.db.CoreDatabase;
 import com.coredata.core.db.OpenHelperInterface;
@@ -26,12 +27,16 @@ public class CoreDatabaseManager {
 
     private static final String CIPHER_HELPER_CLASS = "com.coredata.cipher.CipherOpenHelper";
 
+    private Migration migration;
+
     public CoreDatabaseManager(Context context,
                                String name,
                                int version,
                                HashMap<Class, CoreDao> coreDaoHashMap,
-                               String password) {
+                               String password,
+                               Migration migration) {
         this.coreDaoHashMap = coreDaoHashMap;
+        this.migration = migration;
         if (TextUtils.isEmpty(password)) {
             openHelper = new NormalOpenHelper(context, name, version);
         } else {
@@ -68,6 +73,9 @@ public class CoreDatabaseManager {
     }
 
     public void onUpgrade(CoreDatabase cdb, int oldVersion, int newVersion) {
+        if (migration != null) {
+            migration.onStart(cdb, oldVersion, newVersion);
+        }
         // 先取出老的表结构
         List<String> originTableList = originTableList(cdb);
         // 如果存在执行升级，不存在执行创建
@@ -83,6 +91,9 @@ public class CoreDatabaseManager {
         // 剩下的删除表
         for (String leftTableName : originTableList) {
             cdb.execSQL("DROP TABLE " + leftTableName);
+        }
+        if (migration != null) {
+            migration.onEnd(cdb, oldVersion, newVersion);
         }
         Log.d("wanpg", "CoreDataBaseHelper----onUpgrade");
     }

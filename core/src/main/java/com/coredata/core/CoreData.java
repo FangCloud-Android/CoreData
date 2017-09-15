@@ -2,6 +2,7 @@ package com.coredata.core;
 
 import android.app.Application;
 
+import com.coredata.core.db.Migration;
 import com.coredata.core.utils.ReflectUtils;
 
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ public final class CoreData {
         private String name;
         private int version;
         private String password;
+        private Migration migration;
 
         public static Builder builder() {
             return new Builder();
@@ -46,6 +48,11 @@ public final class CoreData {
 
         public Builder password(String password) {
             this.password = password;
+            return this;
+        }
+
+        public Builder migration(Migration migration) {
+            this.migration = migration;
             return this;
         }
     }
@@ -111,7 +118,8 @@ public final class CoreData {
                 builder.name,
                 builder.version,
                 coreDaoHashMap,
-                builder.password);
+                builder.password,
+                builder.migration);
         for (Map.Entry<Class, CoreDao> entry : coreDaoHashMap.entrySet()) {
             entry.getValue().onCreate(coreDataBaseManager);
         }

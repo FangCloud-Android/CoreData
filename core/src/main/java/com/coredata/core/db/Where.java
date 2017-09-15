@@ -169,7 +169,7 @@ abstract class Where<SET extends BaseSet<T>, T> {
      * @return
      */
     public Where<SET, T> like(String expression) {
-        set.append(String.format(" <= '%s'", expression));
+        set.append(String.format(" LIKE '%s'", expression));
         return this;
     }
 }
