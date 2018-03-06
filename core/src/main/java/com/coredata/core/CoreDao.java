@@ -185,11 +185,26 @@ public abstract class CoreDao<T> {
         this.cdbManager = cdbManager;
     }
 
-    protected abstract String getTableName();
+    /**
+     * 获取表名
+     *
+     * @return
+     */
+    public abstract String getTableName();
 
-    protected abstract String getPrimaryKeyName();
+    /**
+     * 获取主键的名字
+     *
+     * @return
+     */
+    public abstract String getPrimaryKeyName();
 
-    protected abstract List<Property> getTableProperties();
+    /**
+     * 获取table所有的fields
+     *
+     * @return
+     */
+    public abstract List<Property> getTableProperties();
 
     protected abstract String getCreateTableSql();
 

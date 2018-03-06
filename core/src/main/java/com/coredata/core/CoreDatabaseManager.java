@@ -5,20 +5,21 @@ import android.database.Cursor;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.coredata.core.db.Migration;
-import com.coredata.core.normal.NormalOpenHelper;
 import com.coredata.core.db.CoreDatabase;
+import com.coredata.core.db.Migration;
 import com.coredata.core.db.OpenHelperInterface;
+import com.coredata.core.normal.NormalOpenHelper;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Created by wangjinpeng on 2017/7/31.
+ * Core 数据库管理类
  */
-
 public class CoreDatabaseManager {
 
     private final Map<Class, CoreDao> coreDaoHashMap;
@@ -27,20 +28,20 @@ public class CoreDatabaseManager {
 
     private static final String CIPHER_HELPER_CLASS = "com.coredata.cipher.CipherOpenHelper";
 
-    private Migration migration;
+    private List<Migration> migrations;
 
     public CoreDatabaseManager(Context context,
                                String name,
                                int version,
                                HashMap<Class, CoreDao> coreDaoHashMap,
                                String password,
-                               Migration migration) {
+                               List<Migration> migrations) {
         this.coreDaoHashMap = coreDaoHashMap;
-        this.migration = migration;
+        this.migrations = migrations;
         if (TextUtils.isEmpty(password)) {
             openHelper = new NormalOpenHelper(context, name, version);
         } else {
-            Class<?> aClass = null;
+            Class<?> aClass;
             try {
                 aClass = Class.forName(CIPHER_HELPER_CLASS);
             } catch (ClassNotFoundException e) {
@@ -54,6 +55,14 @@ public class CoreDatabaseManager {
                 e.printStackTrace();
                 throw new IllegalStateException("if you want to use sqlite by password, you must dependencies coredata-cipher");
             }
+        }
+        if (migrations != null) {
+            Collections.sort(migrations, new Comparator<Migration>() {
+                @Override
+                public int compare(Migration o1, Migration o2) {
+                    return o1.getStartVersion() - o2.getStartVersion();
+                }
+            });
         }
     }
 
@@ -73,8 +82,13 @@ public class CoreDatabaseManager {
     }
 
     public void onUpgrade(CoreDatabase cdb, int oldVersion, int newVersion) {
-        if (migration != null) {
-            migration.onStart(cdb, oldVersion, newVersion);
+        if (migrations != null) {
+            for (Migration migration : migrations) {
+                int startVersion = migration.getStartVersion();
+                if (startVersion > oldVersion && startVersion <= newVersion) {
+                    migration.onStart(cdb, oldVersion, newVersion);
+                }
+            }
         }
         // 先取出老的表结构
         List<String> originTableList = originTableList(cdb);
@@ -92,8 +106,14 @@ public class CoreDatabaseManager {
         for (String leftTableName : originTableList) {
             cdb.execSQL("DROP TABLE " + leftTableName);
         }
-        if (migration != null) {
-            migration.onEnd(cdb, oldVersion, newVersion);
+        if (migrations != null) {
+            for (Migration migration : migrations) {
+                int startVersion = migration.getStartVersion();
+                if (startVersion > oldVersion && startVersion <= newVersion) {
+                    migration.onEnd(cdb, oldVersion, newVersion);
+                }
+            }
+            migrations.clear();
         }
         Log.d("wanpg", "CoreDataBaseHelper----onUpgrade");
     }

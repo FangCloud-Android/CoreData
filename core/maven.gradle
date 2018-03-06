@@ -12,7 +12,7 @@ signing {
 
 // 判断版本是Release or Snapshots
 def isReleaseBuild() {
-    return !version.contains("SNAPSHOT");
+    return !version.contains("SNAPSHOT")
 }
 
 task sourcesJar(type: Jar) {
@@ -41,11 +41,12 @@ publishing {
                 asNode().appendNode('description',
                         '一个android的sqlite关系映射ORM')
                 def dependencies = asNode().appendNode('dependencies')
-                configurations.getByName("_releaseCompile").getResolvedConfiguration().getFirstLevelModuleDependencies().each {
+                def strings = ["annotations", "base"]
+                strings.each {
                     def dependency = dependencies.appendNode('dependency')
-                    dependency.appendNode('groupId', it.moduleGroup)
-                    dependency.appendNode('artifactId', 'coredata-' + it.moduleName)
-                    dependency.appendNode('version', it.moduleVersion)
+                    dependency.appendNode('groupId', group)
+                    dependency.appendNode('artifactId', 'coredata-' + it)
+                    dependency.appendNode('version', version)
                 }
             }
         }

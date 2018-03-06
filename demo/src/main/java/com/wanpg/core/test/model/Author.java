@@ -4,15 +4,10 @@ import com.coredata.annotation.Entity;
 import com.coredata.annotation.PrimaryKey;
 import com.coredata.core.PropertyConverter;
 
-import lombok.Getter;
-import lombok.Setter;
-
 /**
  * Created by wangjinpeng on 2017/3/21.
  */
 @Entity(tableName = "user")
-@Setter
-@Getter
 public class Author {
 
     @PrimaryKey
@@ -41,5 +36,29 @@ public class Author {
         public Tag convertToValue(String s) {
             return null;
         }
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public boolean isDirector() {
+        return isDirector;
+    }
+
+    public void setDirector(boolean director) {
+        isDirector = director;
     }
 }

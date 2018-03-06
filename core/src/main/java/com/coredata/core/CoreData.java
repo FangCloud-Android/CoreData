@@ -8,12 +8,12 @@ import com.coredata.core.utils.ReflectUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
- * Created by wangjinpeng on 2017/6/3.
+ * CoreData核心类，用于构建实例，初始化配置等等
  */
-
 public final class CoreData {
 
     public static class Builder {
@@ -21,7 +21,9 @@ public final class CoreData {
         private String name;
         private int version;
         private String password;
+        @Deprecated
         private Migration migration;
+        private List<Migration> migrations = new ArrayList<>();
 
         public static Builder builder() {
             return new Builder();
@@ -51,8 +53,26 @@ public final class CoreData {
             return this;
         }
 
+        /**
+         * 添加migration，已失效，请使用{@link #addMigration(Migration)}代替
+         *
+         * @param migration
+         * @return
+         */
+        @Deprecated
         public Builder migration(Migration migration) {
             this.migration = migration;
+            return this;
+        }
+
+        /**
+         * 添加migration, 配置migration及其起始版本
+         *
+         * @param migration migration脚本
+         * @return
+         */
+        public Builder addMigration(Migration migration) {
+            migrations.add(migration);
             return this;
         }
     }
@@ -119,7 +139,7 @@ public final class CoreData {
                 builder.version,
                 coreDaoHashMap,
                 builder.password,
-                builder.migration);
+                builder.migrations);
         for (Map.Entry<Class, CoreDao> entry : coreDaoHashMap.entrySet()) {
             entry.getValue().onCreate(coreDataBaseManager);
         }

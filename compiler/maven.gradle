@@ -12,7 +12,7 @@ signing {
 
 // 判断版本是Release or Snapshots
 def isReleaseBuild() {
-    return !version.contains("SNAPSHOT");
+    return !version.contains("SNAPSHOT")
 }
 
 task sourcesJar(type: Jar) {

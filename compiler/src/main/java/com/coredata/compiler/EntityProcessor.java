@@ -174,14 +174,14 @@ public final class EntityProcessor extends AbstractProcessor {
 
         // 创建 getTableName 方法，返回tableName
         MethodSpec getTableNameMethod = MethodSpec.methodBuilder("getTableName")
-                .addModifiers(Modifier.PROTECTED)
+                .addModifiers(Modifier.PUBLIC)
                 .returns(String.class)
                 .addStatement("return $S", tableName)
                 .build();
 
         // 创建 getPrimaryKeyName 方法，返回 主键的名字
         MethodSpec getPrimaryKeyNameMethod = MethodSpec.methodBuilder("getPrimaryKeyName")
-                .addModifiers(Modifier.PROTECTED)
+                .addModifiers(Modifier.PUBLIC)
                 .returns(String.class)
                 .addStatement("return $S", Utils.getColumnName(primaryKeyElement))
                 .build();
@@ -193,7 +193,7 @@ public final class EntityProcessor extends AbstractProcessor {
         ParameterizedTypeName listPropertyType = ParameterizedTypeName.get(ClassName.get(ArrayList.class), classCoreProperty);
         MethodSpec.Builder getTablePropertiesBuilder =
                 MethodSpec.methodBuilder("getTableProperties")
-                        .addModifiers(Modifier.PROTECTED)
+                        .addModifiers(Modifier.PUBLIC)
                         .returns(ParameterizedTypeName.get(ClassName.get(List.class), classCoreProperty));
         getTablePropertiesBuilder.addStatement("$T list = new $T()", listPropertyType, listPropertyType);
         for (Property property : propertyList) {

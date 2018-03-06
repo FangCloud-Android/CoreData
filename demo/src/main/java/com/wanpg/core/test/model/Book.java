@@ -13,22 +13,15 @@ import com.coredata.core.converter.StringListConverter;
 
 import java.util.List;
 
-import lombok.Getter;
-import lombok.Setter;
-
 /**
  * Created by wangjinpeng on 2017/6/1.
  */
 @Entity
-@Setter
-@Getter
 public class Book {
 
     @PrimaryKey
     public long id;
 
-    @Setter
-    @Getter
     private String name;
 
     @Convert(converter = SerializableListConverter.class, dbType = String.class)
@@ -59,5 +52,89 @@ public class Book {
 
     public Author getAuthor() {
         return author;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public List<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<Tag> tags) {
+        this.tags = tags;
+    }
+
+    public String[] getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(String[] permissions) {
+        this.permissions = permissions;
+    }
+
+    public void setAuthor(Author author) {
+        this.author = author;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(Address address) {
+        this.address = address;
+    }
+
+    public Desc getDesc() {
+        return desc;
+    }
+
+    public void setDesc(Desc desc) {
+        this.desc = desc;
+    }
+
+    public List<String> getTestList() {
+        return testList;
+    }
+
+    public void setTestList(List<String> testList) {
+        this.testList = testList;
+    }
+
+    public String getTag1() {
+        return tag1;
+    }
+
+    public void setTag1(String tag1) {
+        this.tag1 = tag1;
+    }
+
+    public String getTag2() {
+        return tag2;
+    }
+
+    public void setTag2(String tag2) {
+        this.tag2 = tag2;
+    }
+
+    public String getTag3() {
+        return tag3;
+    }
+
+    public void setTag3(String tag3) {
+        this.tag3 = tag3;
     }
 }
