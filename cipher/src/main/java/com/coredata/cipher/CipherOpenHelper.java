@@ -18,22 +18,24 @@ import net.sqlcipher.database.SQLiteOpenHelper;
 public class CipherOpenHelper extends SQLiteOpenHelper implements OpenHelperInterface {
 
     private String password;
+    private String instanceTag;
 
-    public CipherOpenHelper(Context context, String name, int version, String password) {
+    public CipherOpenHelper(Context context, String name, int version, String password, String tag) {
         super(context, name, null, version);
-        SQLiteDatabase.loadLibs(context);
+        this.instanceTag = tag;
         this.password = password;
+        SQLiteDatabase.loadLibs(context);
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        CoreDatabaseManager cdbManager = CoreData.defaultInstance().getCoreDataBase();
+        CoreDatabaseManager cdbManager = CoreData.instance(instanceTag).getCoreDataBase();
         cdbManager.onCreate(new CipherDatabase(db));
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        CoreDatabaseManager cdbManager = CoreData.defaultInstance().getCoreDataBase();
+        CoreDatabaseManager cdbManager = CoreData.instance(instanceTag).getCoreDataBase();
         cdbManager.onUpgrade(new CipherDatabase(db), oldVersion, newVersion);
     }
 

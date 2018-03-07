@@ -2,6 +2,8 @@ package com.coredata.core.utils;
 
 import android.util.Base64;
 
+import com.coredata.core.io.ObjectInputStreamWrap;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
@@ -31,11 +33,15 @@ public class ConvertUtils {
 
     @SuppressWarnings({"TryWithIdenticalCatches", "unchecked"})
     public static <T> T fromString(String s) {
+        return fromString(s, null);
+    }
+
+    public static <T> T fromString(String s, Class<T> tClass) {
         if (s != null) {
             ObjectInputStream ois = null;
             try {
                 byte[] data = Base64.decode(s, Base64.NO_WRAP);
-                ois = new ObjectInputStream(new ByteArrayInputStream(data));
+                ois = new ObjectInputStreamWrap(new ByteArrayInputStream(data), tClass);
                 return (T) ois.readObject();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -67,7 +73,7 @@ public class ConvertUtils {
         return null;
     }
 
-    public static List<String> listfromString(String s, String splitCharacter) {
+    public static List<String> listFromString(String s, String splitCharacter) {
         if (s != null) {
             String[] split = s.split(splitCharacter);
             List<String> tags = new ArrayList<>();
@@ -94,7 +100,7 @@ public class ConvertUtils {
         return sb.toString();
     }
 
-    public static String[] arrayfromString(String s, String splitCharacter) {
+    public static String[] arrayFromString(String s, String splitCharacter) {
         if (s != null) {
             return s.split(splitCharacter);
         }

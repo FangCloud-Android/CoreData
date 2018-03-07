@@ -17,6 +17,6 @@ public class StringListConverter implements PropertyConverter<List<String>, Stri
 
     @Override
     public List<String> convertToValue(String s) {
-        return ConvertUtils.listfromString(s, ";");
+        return ConvertUtils.listFromString(s, ";");
     }
 }

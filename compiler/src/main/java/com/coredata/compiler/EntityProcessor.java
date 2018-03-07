@@ -3,15 +3,16 @@ package com.coredata.compiler;
 import com.coredata.annotation.Convert;
 import com.coredata.annotation.Embedded;
 import com.coredata.annotation.Entity;
-import com.coredata.db.Property;
-import com.coredata.compiler.method.CreateConvertStatement;
 import com.coredata.compiler.method.BindCursorMethod;
 import com.coredata.compiler.method.BindStatementMethod;
+import com.coredata.compiler.method.CreateConvertStatement;
 import com.coredata.compiler.method.ReplaceInternalMethod;
 import com.coredata.compiler.utils.SqlBuilder;
 import com.coredata.compiler.utils.TextUtils;
 import com.coredata.compiler.utils.Utils;
+import com.coredata.db.Property;
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
@@ -114,6 +115,10 @@ public final class EntityProcessor extends AbstractProcessor {
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .superclass(ParameterizedTypeName.get(classCoreDao, classEntity));
 
+        // static 代码块
+        CodeBlock convertStaticBlock = CreateConvertStatement.buildConvertStatic(convertElements);
+        daoTypeBuilder.addStaticBlock(convertStaticBlock);
+
         // 创建convert
         List<FieldSpec> convertFieldSpecs = CreateConvertStatement.bindComvertFields(convertElements);
         if (convertFieldSpecs != null) {
@@ -127,8 +132,8 @@ public final class EntityProcessor extends AbstractProcessor {
         MethodSpec.Builder onCreateMethodBuilder = MethodSpec.methodBuilder("onCreate")
                 .addModifiers(Modifier.PROTECTED)
                 .returns(void.class)
-                .addParameter(classSQLiteOpenHelper, "cdbManager")
-                .addStatement("super.onCreate($N)", "cdbManager");
+                .addParameter(classCoreData, "coreData")
+                .addStatement("super.onCreate($N)", "coreData");
         for (Element relationElement : relationElements) {
             TypeMirror typeMirror = relationElement.asType();
             ClassName classRelation =
@@ -143,9 +148,8 @@ public final class EntityProcessor extends AbstractProcessor {
 
             onCreateMethodBuilder
                     .addStatement(
-                            "$N = $T.defaultInstance().dao($T.class)",
+                            "$N = coreData.dao($T.class)",
                             daoFieldName,
-                            classCoreData,
                             classRelation
                     );
         }

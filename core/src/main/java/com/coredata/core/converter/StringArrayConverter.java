@@ -15,6 +15,6 @@ public class StringArrayConverter implements PropertyConverter<String[], String>
 
     @Override
     public String[] convertToValue(String s) {
-        return ConvertUtils.arrayfromString(s, ";");
+        return ConvertUtils.arrayFromString(s, ";");
     }
 }

@@ -3,13 +3,16 @@ package com.coredata.core;
 import android.app.Application;
 
 import com.coredata.core.db.Migration;
+import com.coredata.core.io.ObjectInputStreamWrap;
 import com.coredata.core.utils.ReflectUtils;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * CoreData核心类，用于构建实例，初始化配置等等
@@ -17,6 +20,7 @@ import java.util.Map;
 public final class CoreData {
 
     public static class Builder {
+        private String tag = TAG_DEFAULT_INSTANCE;
         private ArrayList<Class<?>> coreObjectTypeList;
         private String name;
         private int version;
@@ -38,16 +42,34 @@ public final class CoreData {
             return this;
         }
 
+        /**
+         * 数据库名称，可以是一个路径
+         *
+         * @param name
+         * @return
+         */
         public Builder name(String name) {
             this.name = name;
             return this;
         }
 
+        /**
+         * 数据库版本
+         *
+         * @param version
+         * @return
+         */
         public Builder version(int version) {
             this.version = version;
             return this;
         }
 
+        /**
+         * 数据库密码，当设置此密码，默认开启数据库加密，要引用相应的库
+         *
+         * @param password
+         * @return
+         */
         public Builder password(String password) {
             this.password = password;
             return this;
@@ -75,12 +97,28 @@ public final class CoreData {
             migrations.add(migration);
             return this;
         }
+
+        /**
+         * 添加tag，用于区分CoreData实例，用于动态创建CoreData实例
+         *
+         * @param tag
+         * @return
+         */
+        public Builder tag(String tag) {
+            this.tag = tag;
+            return this;
+        }
     }
 
     /**
-     * 默认的实例
+     * 默认实例的tag
      */
-    private static CoreData instance;
+    private static final String TAG_DEFAULT_INSTANCE = "default";
+
+    /**
+     * 实例集合
+     */
+    private static Map<String, CoreData> instanceMap = new ConcurrentHashMap<>();
 
     /**
      * 此方法是初始化CoreData的入口
@@ -89,10 +127,12 @@ public final class CoreData {
      * @param builder     {@link Builder}构建工具
      */
     public synchronized static void init(Application application, Builder builder) {
+        CoreData instance = instanceMap.get(builder.tag);
         if (instance != null) {
-            throw new IllegalStateException("CoreData has been initialized");
+            throw new IllegalStateException("CoreData(tag = " + builder.tag + ") has been initialized");
         }
         instance = new CoreData(builder);
+        instanceMap.put(builder.tag, instance);
         instance.onCreate(application);
     }
 
@@ -101,12 +141,32 @@ public final class CoreData {
      *
      * @return 返回一个默认且唯一的实例
      */
-    public static CoreData defaultInstance() {
+    public synchronized static CoreData defaultInstance() {
+        return instance(TAG_DEFAULT_INSTANCE);
+    }
+
+    /**
+     * 根据指定的key获取实例
+     *
+     * @return
+     */
+    public synchronized static CoreData instance(String key) {
+        CoreData instance = instanceMap.get(key);
         if (instance == null) {
             throw new IllegalStateException("CoreData has not been initialized, " +
-                    "you must call CoreData.onCreate(app) when Application onCreate be invoked");
+                    "you must call CoreData.init(Application, Builder) when Application onCreate be invoked");
         }
         return instance;
+    }
+
+    /**
+     * 注册序列化类型，此方法不调用也不会出问题，主要是为了保证Class的安全性
+     * Serializable序列化默认不支持变更 Class的一切内容
+     *
+     * @param aClass
+     */
+    public static void registerSerializableClass(Class<? extends Serializable> aClass) {
+        ObjectInputStreamWrap.registerClass(aClass);
     }
 
     private CoreDatabaseManager coreDataBaseManager;
@@ -139,9 +199,10 @@ public final class CoreData {
                 builder.version,
                 coreDaoHashMap,
                 builder.password,
-                builder.migrations);
+                builder.migrations,
+                builder.tag);
         for (Map.Entry<Class, CoreDao> entry : coreDaoHashMap.entrySet()) {
-            entry.getValue().onCreate(coreDataBaseManager);
+            entry.getValue().onCreate(this);
         }
     }
 

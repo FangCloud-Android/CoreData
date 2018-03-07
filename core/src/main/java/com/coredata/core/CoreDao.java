@@ -30,7 +30,7 @@ public abstract class CoreDao<T> {
     public static final String RESULT_SUM = "result_sum";
 
     private static final Object lock = new Object();
-    private CoreDatabaseManager cdbManager;
+    private CoreData cdInstance;
 
     /**
      * 数据库创建
@@ -179,10 +179,10 @@ public abstract class CoreDao<T> {
     /**
      * 数据库创建
      *
-     * @param cdbManager 数据库管理类
+     * @param coreData CoreData实例
      */
-    protected void onCreate(CoreDatabaseManager cdbManager) {
-        this.cdbManager = cdbManager;
+    protected void onCreate(CoreData coreData) {
+        this.cdInstance = coreData;
     }
 
     /**
@@ -273,7 +273,7 @@ public abstract class CoreDao<T> {
             return false;
         }
         synchronized (lock) {
-            CoreDatabase cdb = cdbManager.getWritableDatabase();
+            CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
             cdb.beginTransaction();
             replace(t, cdb);
             cdb.setTransactionSuccessful();
@@ -290,7 +290,7 @@ public abstract class CoreDao<T> {
      */
     public boolean replace(Collection<T> tCollection) {
         synchronized (lock) {
-            CoreDatabase cdb = cdbManager.getWritableDatabase();
+            CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
             cdb.beginTransaction();
             replace(tCollection, cdb);
             cdb.setTransactionSuccessful();
@@ -351,7 +351,7 @@ public abstract class CoreDao<T> {
             CoreDatabase cdb;
             Cursor cursor = null;
             try {
-                cdb = cdbManager.getReadableDatabase();
+                cdb = cdInstance.getCoreDataBase().getReadableDatabase();
                 cursor = cdb.rawQuery(sql, null);
                 return bindCursor(cursor);
             } catch (Exception e) {
@@ -383,7 +383,7 @@ public abstract class CoreDao<T> {
             Log.d("CoreData", "CoreDao--querySqlInternal--sql:" + sql);
             CoreDatabase cdb;
             try {
-                cdb = cdbManager.getReadableDatabase();
+                cdb = cdInstance.getCoreDataBase().getReadableDatabase();
                 return cdb.rawQuery(sql, null);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -450,7 +450,7 @@ public abstract class CoreDao<T> {
     boolean updateDeleteInternal(String sql) {
         synchronized (lock) {
             Log.d("CoreData", "CoreDao--updateDeleteInternal--sql:" + sql);
-            CoreDatabase cdb = cdbManager.getWritableDatabase();
+            CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
             CoreStatement cs = cdb.compileStatement(sql);
             return cs.executeUpdateDelete() > 0;
         }

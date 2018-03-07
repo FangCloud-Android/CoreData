@@ -30,16 +30,19 @@ public class CoreDatabaseManager {
 
     private List<Migration> migrations;
 
+    private String instanceTag;
+
     public CoreDatabaseManager(Context context,
                                String name,
                                int version,
                                HashMap<Class, CoreDao> coreDaoHashMap,
                                String password,
-                               List<Migration> migrations) {
+                               List<Migration> migrations, String tag) {
         this.coreDaoHashMap = coreDaoHashMap;
         this.migrations = migrations;
+        instanceTag = tag;
         if (TextUtils.isEmpty(password)) {
-            openHelper = new NormalOpenHelper(context, name, version);
+            openHelper = new NormalOpenHelper(context, name, version, instanceTag);
         } else {
             Class<?> aClass;
             try {
@@ -49,8 +52,9 @@ public class CoreDatabaseManager {
                 throw new IllegalStateException("if you want to use sqlite by password, you must dependencies coredata-cipher");
             }
             try {
-                openHelper = (OpenHelperInterface) aClass.getConstructor(Context.class, String.class, int.class, String.class)
-                        .newInstance(context, name, version, password);
+                openHelper = (OpenHelperInterface) aClass.getConstructor(
+                        Context.class, String.class, int.class, String.class, String.class)
+                        .newInstance(context, name, version, password, instanceTag);
             } catch (Exception e) {
                 e.printStackTrace();
                 throw new IllegalStateException("if you want to use sqlite by password, you must dependencies coredata-cipher");
