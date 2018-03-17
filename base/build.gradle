@@ -7,4 +7,5 @@ dependencies {
 sourceCompatibility = "1.7"
 targetCompatibility = "1.7"
 
-apply from: 'maven.gradle'
+//apply from: 'maven.gradle'
+apply from: '../jitpack-jar.gradle'

@@ -25,4 +25,4 @@ dependencies {
     compile project(':base')
 }
 
-apply from: 'maven.gradle'
+apply from: '../jitpack-aar.gradle'

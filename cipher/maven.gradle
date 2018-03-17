@@ -40,6 +40,19 @@ publishing {
             pom.withXml {
                 asNode().appendNode('description',
                         '一个android的sqlite关系映射ORM[加密组件]')
+                def dependencies = asNode().appendNode('dependencies')
+                def strings = ["core"]
+                strings.each {
+                    def dependency = dependencies.appendNode('dependency')
+                    dependency.appendNode('groupId', group)
+                    dependency.appendNode('artifactId', 'coredata-' + it)
+                    dependency.appendNode('version', version)
+                }
+                def dependency = dependencies.appendNode('dependency')
+                dependency.appendNode('groupId', 'net.zetetic')
+                dependency.appendNode('artifactId', 'android-database-sqlcipher')
+                dependency.appendNode('version', '3.5.9')
+                dependency.appendNode('type', 'aar')
             }
         }
     }

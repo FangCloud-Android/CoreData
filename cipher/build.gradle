@@ -20,8 +20,9 @@ android {
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'net.zetetic:android-database-sqlcipher:3.5.7@aar'
+    compile 'net.zetetic:android-database-sqlcipher:3.5.9@aar'
     compile project(':core')
 }
 
-apply from: 'maven.gradle'
+//apply from: 'maven.gradle'
+apply from: '../jitpack-aar.gradle'
