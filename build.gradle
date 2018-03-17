@@ -3,6 +3,8 @@
 buildscript {
     repositories {
         jcenter()
+        google()
+        maven { url "https://jitpack.io" }
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.0.1'
@@ -44,5 +46,6 @@ task clean(type: Delete) {
 }
 
 subprojects {
-
+    apply plugin: 'com.github.dcendents.android-maven'
+    group = GROUP
 }

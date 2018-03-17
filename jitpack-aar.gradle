@@ -1,7 +1,3 @@
-apply plugin: 'com.github.dcendents.android-maven' // ADD THIS
-
-group = GROUP
-
 // build a jar with source files
 task sourcesJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs

@@ -11,18 +11,12 @@ android {
         versionName "1.0"
 
     }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile project(':annotations')
-    compile project(':base')
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation project(':annotations')
+    implementation project(':base')
 }
 
 apply from: '../jitpack-aar.gradle'
