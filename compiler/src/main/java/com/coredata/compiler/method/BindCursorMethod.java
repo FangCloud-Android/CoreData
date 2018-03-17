@@ -3,6 +3,7 @@ package com.coredata.compiler.method;
 import com.coredata.annotation.Convert;
 import com.coredata.annotation.Embedded;
 import com.coredata.annotation.Relation;
+import com.coredata.compiler.EntityDetail;
 import com.coredata.compiler.utils.Utils;
 import com.coredata.db.Property;
 import com.squareup.javapoet.ClassName;
@@ -27,15 +28,15 @@ import static com.coredata.compiler.EntityProcessor.classCursor;
  */
 
 public class BindCursorMethod extends BaseMethod {
-    public BindCursorMethod(ProcessingEnvironment processingEnv, TypeElement typeElement) {
-        super(processingEnv, typeElement);
+    public BindCursorMethod(ProcessingEnvironment processingEnv, EntityDetail entityDetail) {
+        super(processingEnv, entityDetail);
     }
 
     @Override
     public MethodSpec build() {
         MethodSpec.Builder builder = MethodSpec.methodBuilder("bindCursor")
                 .addModifiers(Modifier.PROTECTED)
-                .returns(ParameterizedTypeName.get(ClassName.get(List.class), ClassName.get(typeElement.asType())))
+                .returns(ParameterizedTypeName.get(ClassName.get(List.class), ClassName.get(entityDetail.getEntityElement().asType())))
                 .addParameter(classCursor, "cursor");
         bind(builder);
         return builder.build();
@@ -70,12 +71,11 @@ public class BindCursorMethod extends BaseMethod {
 //            }
 //        }
 //        return bookList;
-        TypeName typeNameEntity = ClassName.get(typeElement.asType());
-        Element typeEntity = processingEnv.getTypeUtils().asElement(typeElement.asType());
+        TypeName typeNameEntity = ClassName.get(entityDetail.getEntityElement().asType());
         ParameterizedTypeName typeListEntity = ParameterizedTypeName.get(ClassName.get(ArrayList.class), typeNameEntity);
-        List<Element> elementsForDb = Utils.getElementsForDb(processingEnv.getElementUtils(), typeElement);
-        List<Property> properties = Utils.getProperties(processingEnv.getElementUtils(), processingEnv.getTypeUtils(), elementsForDb);
-        List<Element> relationElements = Utils.getRelationElements(elementsForDb);
+        List<Element> elementsForDb = entityDetail.getDbElements();
+        List<Property> properties = entityDetail.getProperties(processingEnv);
+        List<Element> relationElements = entityDetail.getRelationElements();
         for (Property property : properties) {
             builder.addStatement("int $N = cursor.getColumnIndexOrThrow($S)", "cursorIndexOf" + property.name, property.name);
         }
@@ -85,7 +85,8 @@ public class BindCursorMethod extends BaseMethod {
         // 创建多个关联数据的hashMap，主键类型为key
         for (Element relationElement : relationElements) {
             TypeElement typeRelation = (TypeElement) processingEnv.getTypeUtils().asElement(relationElement.asType());
-            Element primaryKeyElement = Utils.primaryKeyElement(Utils.getElementsForDb(processingEnv.getElementUtils(), typeRelation));
+            EntityDetail relationEntityDetail = EntityDetail.parse(processingEnv, typeRelation);
+            Element primaryKeyElement = relationEntityDetail.getPrimaryKey();
             if (primaryKeyElement != null) {
                 TypeMirror typeMirror = primaryKeyElement.asType();
                 ParameterizedTypeName hashMapType = ParameterizedTypeName.get(ClassName.get(HashMap.class), ClassName.get(typeMirror).box(), typeNameEntity);
@@ -109,7 +110,8 @@ public class BindCursorMethod extends BaseMethod {
         for (Element relationElement : relationElements) {
             ClassName classNameRelation = ClassName.bestGuess(relationElement.asType().toString());
             TypeElement typeRelationElement = (TypeElement) processingEnv.getTypeUtils().asElement(relationElement.asType());
-            Element primaryKeyElement = Utils.primaryKeyElement(Utils.getElementsForDb(processingEnv.getElementUtils(), typeRelationElement));
+            EntityDetail relationEntityDetail = EntityDetail.parse(processingEnv, typeRelationElement);
+            Element primaryKeyElement = relationEntityDetail.getPrimaryKey();
             if (primaryKeyElement != null) {
                 //            List<Author> authorList = __authorCoreDao.queryByKeys(authorIdWithBookMap.keySet().toArray(new Integer[]{}));
                 TypeName primaryTypeName = ClassName.get(primaryKeyElement.asType());
@@ -153,8 +155,10 @@ public class BindCursorMethod extends BaseMethod {
                 String embeddedTempName = "__" + element.getSimpleName() + "Temp";
                 builder.addStatement("$T $N = new $T()", typeName, embeddedTempName, typeName);
                 // 赋值
-                List<Element> elementsForDb = Utils.getElementsForDb(processingEnv.getElementUtils(), (TypeElement) typeElement);
-                for (Element eleEmbeddedChild : elementsForDb) {
+                List<Element> elementsForDbEmbedded = new ArrayList<>();
+                Utils.fillElementsForDbAndReturnPrimaryKey(processingEnv, elementsForDbEmbedded, (TypeElement) typeElement);
+                ;
+                for (Element eleEmbeddedChild : elementsForDbEmbedded) {
                     bindCursorToField(builder, eleEmbeddedChild, embeddedTempName);
                 }
                 builder.addStatement(Utils.methodSetFormat(element, prefix), embeddedTempName);
@@ -176,7 +180,8 @@ public class BindCursorMethod extends BaseMethod {
             Relation relation = element.getAnnotation(Relation.class);
             if (relation != null) {
                 TypeElement typeRelation = (TypeElement) processingEnv.getTypeUtils().asElement(element.asType());
-                Element primaryKeyElement = Utils.primaryKeyElement(Utils.getElementsForDb(processingEnv.getElementUtils(), typeRelation));
+                EntityDetail relationEntityDetail = EntityDetail.parse(processingEnv, typeRelation);
+                Element primaryKeyElement = relationEntityDetail.getPrimaryKey();
                 if (primaryKeyElement != null) {
                     TypeName typePrimary = ClassName.get(primaryKeyElement.asType());
                     String columnName = Utils.getColumnName(element);

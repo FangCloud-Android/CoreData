@@ -7,6 +7,7 @@ import com.coredata.annotation.Entity;
 import com.coredata.annotation.Ignore;
 import com.coredata.annotation.PrimaryKey;
 import com.coredata.annotation.Relation;
+import com.coredata.compiler.EntityDetail;
 import com.coredata.db.Property;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
@@ -150,43 +152,12 @@ public class Utils {
     }
 
     /**
-     * @param elements
-     * @param element
-     * @return
-     */
-    public static List<Element> getElementsForDb(Elements elements, TypeElement element) {
-        List<Element> listCreatePro = new ArrayList<>();
-        List<? extends Element> enclosedElements = element.getEnclosedElements();
-        boolean hasPrimaryKey = false;
-        for (Element member : enclosedElements) {
-            if (member.getKind().isField()) {
-                if (isDbElement(member.getModifiers())) {
-                    if (member.getAnnotation(Ignore.class) == null) {
-                        if (member.getAnnotation(PrimaryKey.class) != null) {
-                            if (hasPrimaryKey) {
-                                throw new RuntimeException(element.getSimpleName() + "同时拥有两个主键，目前不支持多主键");
-                            }
-                            hasPrimaryKey = true;
-                        }
-                        listCreatePro.add(member);
-                        System.out.println(member.getSimpleName() + "----" + member.getKind());
-                    }
-                }
-            }
-        }
-        if (!element.getSuperclass().toString().equals(Object.class.getCanonicalName())) {
-            listCreatePro.addAll(getElementsForDb(elements, elements.getTypeElement(element.getSuperclass().toString())));
-        }
-        return listCreatePro;
-    }
-
-    /**
      * 静态参数，final参数和transient参数都不是数据库类型
      *
      * @param modifiers
      * @return
      */
-    private static boolean isDbElement(Set<Modifier> modifiers) {
+    public static boolean isDbElement(Set<Modifier> modifiers) {
         for (Modifier modifier : modifiers) {
             if (Modifier.STATIC.equals(modifier)) {
                 return false;
@@ -209,7 +180,7 @@ public class Utils {
         return "__" + classRelation.simpleName() + "CoreDao";
     }
 
-    public static Element primaryKeyElement(List<Element> elements) {
+    public static Element primaryKeyElement(List<Element> elements, String primary) {
         for (Element element : elements) {
             if (element.getAnnotation(PrimaryKey.class) != null) {
                 return element;
@@ -282,27 +253,13 @@ public class Utils {
         return sb.toString();
     }
 
-    public static List<Property> getProperties(Elements elementUtils, Types typeUtils, List<Element> elements) {
+    public static List<Property> getProperties(ProcessingEnvironment env, List<Element> elements, Element primaryKey) {
+        Elements elementUtils = env.getElementUtils();
+        Types typeUtils = env.getTypeUtils();
         List<Property> propertyList = new ArrayList<>();
-        boolean hasPrimaryKey = false;
-        for (Element element : elements) {
-            boolean isPrimaryKey = false;
-            if (!hasPrimaryKey) {
-                PrimaryKey primaryKey = element.getAnnotation(PrimaryKey.class);
-                if (primaryKey != null) {
-                    hasPrimaryKey = true;
-                    isPrimaryKey = true;
-                }
-            }
 
-            String name = null;
-            ColumnInfo columnInfo = element.getAnnotation(ColumnInfo.class);
-            if (columnInfo != null) {
-                name = columnInfo.name();
-            }
-            if (TextUtils.isEmpty(name)) {
-                name = element.getSimpleName().toString();
-            }
+        for (Element element : elements) {
+            String columnName = Utils.getColumnName(element);
 
             TypeName dbBaseType;
             TypeMirror typeMirror = element.asType();
@@ -318,16 +275,24 @@ public class Utils {
                     if (relationEntity == null) {
                         throw new IllegalStateException("@Relation 添加的属性必须是 @Entity 的类");
                     }
-                    Element primaryKeyElement = Utils.primaryKeyElement(Utils.getElementsForDb(elementUtils, elementFieldType));
-                    if (primaryKeyElement == null) {
-                        throw new IllegalStateException("@Relation 属性必须有主键");
+
+                    EntityDetail relationEntityDetail = EntityDetail.parse(env, elementFieldType);
+                    Element relationEntityPrimaryKey = relationEntityDetail.getPrimaryKey();
+                    if (relationEntityPrimaryKey == null) {
+                        throw new IllegalStateException(relationEntityDetail.getEntityName() + "是关联类型，@Relation 属性必须有主键");
                     }
-                    dbBaseType = ClassName.get(primaryKeyElement.asType());
+                    dbBaseType = ClassName.get(relationEntityPrimaryKey.asType());
                 } else {
                     Embedded embedded = element.getAnnotation(Embedded.class);
                     if (embedded != null) {
                         // 内嵌数据, 循环解析内嵌结构的字段
-                        propertyList.addAll(getProperties(elementUtils, typeUtils, Utils.getElementsForDb(elementUtils, (TypeElement) typeUtils.asElement(typeMirror))));
+                        List<Element> embeddedEleList = new ArrayList<>();
+                        fillElementsForDbAndReturnPrimaryKey(env, embeddedEleList, (TypeElement) typeUtils.asElement(typeMirror));
+                        propertyList.addAll(
+                                getProperties(
+                                        env,
+                                        embeddedEleList,
+                                        null));
                         continue;
                     } else {
                         Convert convert = element.getAnnotation(Convert.class);
@@ -348,9 +313,65 @@ public class Utils {
                     }
                 }
             }
-            propertyList.add(new Property(name, Utils.getTypeByTypeName(dbBaseType), isPrimaryKey));
+            propertyList.add(new Property(columnName, Utils.getTypeByTypeName(dbBaseType), element == primaryKey));
         }
         return propertyList;
+    }
+
+    public static Element fillElementsForDbAndReturnPrimaryKey(ProcessingEnvironment env, List<Element> elementList, TypeElement element) {
+        Entity entity = element.getAnnotation(Entity.class);
+        String primaryKeyStr = null;
+        if (entity != null) {
+            primaryKeyStr = entity.primaryKey();
+        }
+        return fillElementsForDbAndReturnPrimaryKey(env, elementList, element, primaryKeyStr);
+    }
+
+    private static Element fillElementsForDbAndReturnPrimaryKey(ProcessingEnvironment env, List<Element> elementList, TypeElement element, String primaryKeyStr) {
+        Element primaryKey = null;
+        List<? extends Element> enclosedElements = element.getEnclosedElements();
+        boolean hasPrimaryKey = false;
+        for (Element member : enclosedElements) {
+            if (member.getKind().isField()) {
+                if (Utils.isDbElement(member.getModifiers())) {
+                    if (member.getAnnotation(Ignore.class) == null) {
+                        if (!TextUtils.isEmpty(primaryKeyStr)) {
+                            // 列名 与预设主键相等
+                            String columnName = Utils.getColumnName(member);
+                            if (primaryKeyStr.equals(columnName)) {
+                                // 此列为主键
+                                if (hasPrimaryKey) {
+                                    throw new RuntimeException(element.getSimpleName() + "同时拥有两个主键，目前不支持多主键");
+                                }
+                                if (primaryKey == null) {
+                                    primaryKey = member;
+                                }
+                            }
+                        } else {
+                            if (member.getAnnotation(PrimaryKey.class) != null) {
+                                if (hasPrimaryKey) {
+                                    throw new RuntimeException(element.getSimpleName() + "同时拥有两个主键，目前不支持多主键");
+                                }
+                                if (primaryKey == null) {
+                                    primaryKey = member;
+                                }
+                                hasPrimaryKey = true;
+                            }
+                        }
+                        elementList.add(member);
+                        System.out.println(member.getSimpleName() + "----" + member.getKind());
+                    }
+                }
+            }
+        }
+        // 获取父类的信息
+        if (!element.getSuperclass().toString().equals(Object.class.getCanonicalName())) {
+            Element primaryKey1 = fillElementsForDbAndReturnPrimaryKey(env, elementList, env.getElementUtils().getTypeElement(element.getSuperclass().toString()), primaryKeyStr);
+            if (primaryKey == null) {
+                primaryKey = primaryKey1;
+            }
+        }
+        return primaryKey;
     }
 
     public static String getColumnName(Element element) {

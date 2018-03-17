@@ -1,5 +1,6 @@
 package com.coredata.compiler.method;
 
+import com.coredata.compiler.EntityDetail;
 import com.coredata.compiler.utils.Utils;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
@@ -25,8 +26,8 @@ import static com.coredata.compiler.EntityProcessor.classSQLiteDatabase;
 public class ReplaceInternalMethod extends BaseMethod {
 
 
-    public ReplaceInternalMethod(ProcessingEnvironment processingEnv, TypeElement typeElement) {
-        super(processingEnv, typeElement);
+    public ReplaceInternalMethod(ProcessingEnvironment processingEnv, EntityDetail entityDetail) {
+        super(processingEnv, entityDetail);
     }
 
     @Override
@@ -35,7 +36,7 @@ public class ReplaceInternalMethod extends BaseMethod {
                 .addModifiers(Modifier.PROTECTED)
                 .returns(boolean.class)
                 .addParameter(
-                        ParameterizedTypeName.get(ClassName.get(Collection.class), ClassName.get(typeElement.asType())),
+                        ParameterizedTypeName.get(ClassName.get(Collection.class), ClassName.get(entityDetail.getEntityElement().asType())),
                         "collection")
                 .addParameter(classSQLiteDatabase, "db");
         bind(builder);
@@ -45,10 +46,10 @@ public class ReplaceInternalMethod extends BaseMethod {
 
     private void bind(MethodSpec.Builder builder) {
         Types typeUtils = processingEnv.getTypeUtils();
-        TypeName typeEntity = ClassName.get(typeElement.asType());
+        TypeName typeEntity = ClassName.get(entityDetail.getEntityElement().asType());
         ParameterizedTypeName typeListEntity = ParameterizedTypeName.get(ClassName.get(ArrayList.class), typeEntity);
-        builder.addStatement("$T $N = new $T()", typeListEntity, typeElement.getSimpleName() + "List", typeListEntity);
-        List<Element> relationElements = Utils.getRelationElements(Utils.getElementsForDb(processingEnv.getElementUtils(), typeElement));
+        builder.addStatement("$T $N = new $T()", typeListEntity, entityDetail.getEntityElement().getSimpleName() + "List", typeListEntity);
+        List<Element> relationElements = entityDetail.getRelationElements();
         for (Element relationElement : relationElements) {
             Element typeRelationElement = typeUtils.asElement(relationElement.asType());
             TypeName typeRelation = ClassName.get(relationElement.asType());
@@ -56,7 +57,7 @@ public class ReplaceInternalMethod extends BaseMethod {
             builder.addStatement("$T $N = new $T()", typeListRelation, typeRelationElement.getSimpleName() + "List", typeListRelation);
         }
         builder.addCode("for ($T item : collection) {\n  ", typeEntity);
-        builder.addStatement("$N.add($N)", typeElement.getSimpleName() + "List", "item");
+        builder.addStatement("$N.add($N)", entityDetail.getEntityElement().getSimpleName() + "List", "item");
         for (Element relationElement : relationElements) {
             Element typeRelationElement = typeUtils.asElement(relationElement.asType());
             TypeName typeRelation = ClassName.get(relationElement.asType());
@@ -67,7 +68,7 @@ public class ReplaceInternalMethod extends BaseMethod {
             builder.addCode("}\n");
         }
         builder.addCode("}\n");
-        builder.addStatement("executeInsert($N, db)", typeElement.getSimpleName() + "List");
+        builder.addStatement("executeInsert($N, db)", entityDetail.getEntityElement().getSimpleName() + "List");
         for (Element relationElement : relationElements) {
             Element typeRelationElement = typeUtils.asElement(relationElement.asType());
             ClassName classNameRelation = ClassName.bestGuess(relationElement.asType().toString());

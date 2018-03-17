@@ -1,5 +1,6 @@
 package com.coredata.compiler.method;
 
+import com.coredata.compiler.EntityDetail;
 import com.squareup.javapoet.MethodSpec;
 
 import javax.annotation.processing.ProcessingEnvironment;
@@ -12,11 +13,11 @@ import javax.lang.model.element.TypeElement;
 public abstract class BaseMethod {
 
     protected ProcessingEnvironment processingEnv;
-    protected TypeElement typeElement;
+    protected EntityDetail entityDetail;
 
-    public BaseMethod(ProcessingEnvironment processingEnv, TypeElement typeElement) {
+    public BaseMethod(ProcessingEnvironment processingEnv, EntityDetail entityDetail) {
         this.processingEnv = processingEnv;
-        this.typeElement = typeElement;
+        this.entityDetail = entityDetail;
     }
 
     public abstract MethodSpec build();

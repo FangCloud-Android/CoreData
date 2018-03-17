@@ -1,14 +1,11 @@
 package com.coredata.compiler;
 
-import com.coredata.annotation.Convert;
-import com.coredata.annotation.Embedded;
 import com.coredata.annotation.Entity;
 import com.coredata.compiler.method.BindCursorMethod;
 import com.coredata.compiler.method.BindStatementMethod;
 import com.coredata.compiler.method.CreateConvertStatement;
 import com.coredata.compiler.method.ReplaceInternalMethod;
 import com.coredata.compiler.utils.SqlBuilder;
-import com.coredata.compiler.utils.TextUtils;
 import com.coredata.compiler.utils.Utils;
 import com.coredata.db.Property;
 import com.squareup.javapoet.ClassName;
@@ -25,7 +22,6 @@ import java.util.List;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
-import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.annotation.processing.SupportedSourceVersion;
@@ -65,40 +61,19 @@ public final class EntityProcessor extends AbstractProcessor {
     }
 
     public void createEntityDao(TypeElement element) throws IOException {
-        Elements elementUtils = processingEnv.getElementUtils();
-        Types typeUtils = processingEnv.getTypeUtils();
-        // 实体的类名
-        String entityName = element.getSimpleName().toString();
-        // package
-        String packageName = elementUtils.getPackageOf(element).getQualifiedName().toString();
-        String daoNameFormat = "%sCoreDaoImpl";
-        // 表名
-        String tableName;
 
-        // Entity注解带的primaryKey的value
-        String entityPrimaryKey;
+        EntityDetail entityDetail = EntityDetail.parse(processingEnv, element);
 
-        Entity entity = element.getAnnotation(Entity.class);
-        tableName = entity.tableName();
-        if (TextUtils.isEmpty(tableName)) {
-            tableName = entityName;
-        }
-        entityPrimaryKey = entity.primaryKey();
 
+        // 实体类的class
         ClassName classEntity = ClassName.bestGuess(element.asType().toString());
 
-        List<Element> elementsForDb = Utils.getElementsForDb(elementUtils, element);
 
-        Element primaryKeyElement = Utils.primaryKeyElement(elementsForDb);
-        if (primaryKeyElement == null) {
+        if (entityDetail.getPrimaryKey() == null) {
             throw new RuntimeException(classEntity.reflectionName() + " 没有主键");
         }
 
-        List<Element> relationElements = Utils.getRelationElements(elementsForDb);
-
-        List<Element> convertElements = getConvertElements(processingEnv, elementsForDb);
-
-        List<Property> propertyList = Utils.getProperties(elementUtils, typeUtils, elementsForDb);
+        List<Property> propertyList = entityDetail.getProperties(processingEnv);
 
         // 1、找出tableName，PrimaryKeyName ok
         // 2、找出所有的PropertyConverter，并生成局部变量，类似 __TagListConverter ok
@@ -110,14 +85,18 @@ public final class EntityProcessor extends AbstractProcessor {
         // 8、绑定数据
 
         // dao的java名字
-        String daoName = String.format(daoNameFormat, entityName);
+        String daoName = String.format("%sCoreDaoImpl", entityDetail.getEntityName());
         TypeSpec.Builder daoTypeBuilder = TypeSpec.classBuilder(daoName)
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .superclass(ParameterizedTypeName.get(classCoreDao, classEntity));
 
+        List<Element> convertElements = entityDetail.getConvertElements(processingEnv);
+
         // static 代码块
         CodeBlock convertStaticBlock = CreateConvertStatement.buildConvertStatic(convertElements);
-        daoTypeBuilder.addStaticBlock(convertStaticBlock);
+        if (convertStaticBlock != null) {
+            daoTypeBuilder.addStaticBlock(convertStaticBlock);
+        }
 
         // 创建convert
         List<FieldSpec> convertFieldSpecs = CreateConvertStatement.bindComvertFields(convertElements);
@@ -129,6 +108,7 @@ public final class EntityProcessor extends AbstractProcessor {
 
         // onCreate方法
         // 创建关联的dao
+        List<Element> relationElements = entityDetail.getRelationElements();
         MethodSpec.Builder onCreateMethodBuilder = MethodSpec.methodBuilder("onCreate")
                 .addModifiers(Modifier.PROTECTED)
                 .returns(void.class)
@@ -160,38 +140,38 @@ public final class EntityProcessor extends AbstractProcessor {
         MethodSpec getCreateTableSqlMethod = MethodSpec.methodBuilder("getCreateTableSql")
                 .addModifiers(Modifier.PROTECTED)
                 .returns(String.class)
-                .addStatement("return $S", SqlBuilder.buildCreateSql(tableName, propertyList, true))
+                .addStatement("return $S", SqlBuilder.buildCreateSql(entityDetail.getTableName(), propertyList, true))
                 .build();
 
         // getInsertSql 方法，用来获取插入语句
         MethodSpec getInsertSqlMethod = MethodSpec.methodBuilder("getInsertSql")
                 .addModifiers(Modifier.PROTECTED)
                 .returns(String.class)
-                .addStatement("return $S", Utils.getInsertSql(tableName, propertyList))
+                .addStatement("return $S", Utils.getInsertSql(entityDetail.getTableName(), propertyList))
                 .build();
 
         // bindStatement 用来绑定数据
-        MethodSpec bindStatementMethod = new BindStatementMethod(processingEnv, element).build();
+        MethodSpec bindStatementMethod = new BindStatementMethod(processingEnv, entityDetail).build();
 
         // replaceInternal 方法，用来处理关系型数据
-        MethodSpec replaceInternalMethod = new ReplaceInternalMethod(processingEnv, element).build();
+        MethodSpec replaceInternalMethod = new ReplaceInternalMethod(processingEnv, entityDetail).build();
 
         // 创建 getTableName 方法，返回tableName
         MethodSpec getTableNameMethod = MethodSpec.methodBuilder("getTableName")
                 .addModifiers(Modifier.PUBLIC)
                 .returns(String.class)
-                .addStatement("return $S", tableName)
+                .addStatement("return $S", entityDetail.getTableName())
                 .build();
 
         // 创建 getPrimaryKeyName 方法，返回 主键的名字
         MethodSpec getPrimaryKeyNameMethod = MethodSpec.methodBuilder("getPrimaryKeyName")
                 .addModifiers(Modifier.PUBLIC)
                 .returns(String.class)
-                .addStatement("return $S", Utils.getColumnName(primaryKeyElement))
+                .addStatement("return $S", Utils.getColumnName(entityDetail.getPrimaryKey()))
                 .build();
 
         // 创建 bindCursor 方法，绑定游标数据到模型
-        MethodSpec bindCursorMethod = new BindCursorMethod(processingEnv, element).build();
+        MethodSpec bindCursorMethod = new BindCursorMethod(processingEnv, entityDetail).build();
 
         // 创建 getTableProperties 方法，返回所有字段相关的 Property
         ParameterizedTypeName listPropertyType = ParameterizedTypeName.get(ClassName.get(ArrayList.class), classCoreProperty);
@@ -216,24 +196,9 @@ public final class EntityProcessor extends AbstractProcessor {
                 .addMethod(replaceInternalMethod)
                 .addMethod(bindCursorMethod)
         ;
-        JavaFile javaFile = JavaFile.builder(packageName, daoTypeBuilder.build()).build();
+        JavaFile javaFile = JavaFile.builder(entityDetail.getEntityPackageName(processingEnv), daoTypeBuilder.build()).build();
         javaFile.writeTo(processingEnv.getFiler());
         System.out.println(element.getSimpleName());
-        System.out.println(elementUtils.getPackageOf(element).getQualifiedName());
-    }
-
-    private static List<Element> getConvertElements(ProcessingEnvironment processingEnv, List<Element> elements) {
-        List<Element> elementList = new ArrayList<>();
-        for (Element element : elements) {
-            if (element.getAnnotation(Convert.class) != null) {
-                elementList.add(element);
-            } else {
-                if (element.getAnnotation(Embedded.class) != null) {
-                    Element elementEmbedded = processingEnv.getTypeUtils().asElement(element.asType());
-                    elementList.addAll(getConvertElements(processingEnv, Utils.getElementsForDb(processingEnv.getElementUtils(), (TypeElement) elementEmbedded)));
-                }
-            }
-        }
-        return elementList;
+        System.out.println(processingEnv.getElementUtils().getPackageOf(element).getQualifiedName());
     }
 }

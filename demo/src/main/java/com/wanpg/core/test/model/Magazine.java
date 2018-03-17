@@ -1,15 +1,16 @@
 package com.wanpg.core.test.model;
 
+import com.coredata.annotation.ColumnInfo;
 import com.coredata.annotation.Entity;
 import com.coredata.annotation.PrimaryKey;
 
 /**
  * Created by wangjinpeng on 2017/6/27.
  */
-@Entity
+@Entity(tableName = "maga", primaryKey = "magazine_id")
 public class Magazine extends Book {
 
-    @PrimaryKey
+    @ColumnInfo(name = "magazine_id")
     private long magazineId;
 
 

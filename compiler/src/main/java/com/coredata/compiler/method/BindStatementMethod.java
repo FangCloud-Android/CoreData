@@ -3,6 +3,7 @@ package com.coredata.compiler.method;
 import com.coredata.annotation.Convert;
 import com.coredata.annotation.Embedded;
 import com.coredata.annotation.Relation;
+import com.coredata.compiler.EntityDetail;
 import com.coredata.compiler.EntityProcessor;
 import com.coredata.compiler.utils.TextUtils;
 import com.coredata.compiler.utils.Utils;
@@ -10,24 +11,23 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.MirroredTypeException;
 
 public class BindStatementMethod extends BaseMethod {
 
-    public BindStatementMethod(ProcessingEnvironment processingEnv, TypeElement typeElement) {
-        super(processingEnv, typeElement);
+    public BindStatementMethod(ProcessingEnvironment processingEnv, EntityDetail entityDetail) {
+        super(processingEnv, entityDetail);
     }
 
     @Override
     public MethodSpec build() {
-        List<Element> elementsForDb = Utils.getElementsForDb(processingEnv.getElementUtils(), typeElement);
-        return bindStatementMethod(ClassName.bestGuess(typeElement.asType().toString()), elementsForDb).build();
+        return bindStatementMethod(ClassName.bestGuess(entityDetail.getEntityElement().asType().toString()), entityDetail.getDbElements()).build();
     }
 
     private MethodSpec.Builder bindStatementMethod(ClassName classEntity, List<Element> elements) {
@@ -58,9 +58,9 @@ public class BindStatementMethod extends BaseMethod {
                     Embedded embedded = element.getAnnotation(Embedded.class);
                     if (embedded != null) {
                         Element elementEmbedded = processingEnv.getTypeUtils().asElement(element.asType());
-                        ClassName classEmbeddedElement = ClassName.bestGuess(element.asType().toString());
-                        List<Element> elementsForDb = Utils.getElementsForDb(processingEnv.getElementUtils(), (TypeElement) elementEmbedded);
-                        index = bindStatementMethodInternal(builder, elementsForDb, index, fieldGetMethod, true);
+                        List<Element> elementsForDbEmbedded = new ArrayList<>();
+                        Utils.fillElementsForDbAndReturnPrimaryKey(processingEnv, elementsForDbEmbedded, (TypeElement) elementEmbedded);
+                        index = bindStatementMethodInternal(builder, elementsForDbEmbedded, index, fieldGetMethod, true);
                         continue;
                     }
                     Convert convert = element.getAnnotation(Convert.class);
@@ -78,18 +78,19 @@ public class BindStatementMethod extends BaseMethod {
                         Relation relation = element.getAnnotation(Relation.class);
                         if (relation != null) {
                             TypeElement relationType = (TypeElement) processingEnv.getTypeUtils().asElement(element.asType());
-                            Element primaryKeyElement = Utils.primaryKeyElement(Utils.getElementsForDb(processingEnv.getElementUtils(), relationType));
-                            if (primaryKeyElement == null) {
+                            EntityDetail relationEntityDetail = EntityDetail.parse(processingEnv, relationType);
+                            Element relationEntityDetailPrimaryKey = relationEntityDetail.getPrimaryKey();
+                            if (relationEntityDetailPrimaryKey == null) {
                                 throw new RuntimeException(element.getSimpleName() + "#" + relationType.getSimpleName() + "must add has primaryKey");
                             }
-                            TypeName dbClassName = ClassName.get(primaryKeyElement.asType());
+                            TypeName dbClassName = ClassName.get(relationEntityDetailPrimaryKey.asType());
                             builder.addCode("$T __primaryKey_$N = ", dbClassName, String.valueOf(index));
                             if (carePrefix && !TextUtils.isEmpty(prefix)) {
                                 builder.addCode("$N == null ? $N : ", prefix, getDefaultValue(dbClassName));
                             }
                             // 拼接当前数据判断为空
                             builder.addCode("($N == null ? $N : ", fieldGetMethod, getDefaultValue(dbClassName));
-                            builder.addStatement("$N)", Utils.methodGet(primaryKeyElement, fieldGetMethod));
+                            builder.addStatement("$N)", Utils.methodGet(relationEntityDetailPrimaryKey, fieldGetMethod));
                             bindTo(builder, dbClassName, index, "__primaryKey_" + index, null);
                         } else {
                             throw new RuntimeException(element.getSimpleName() + "must add @Relation or @Convert");
