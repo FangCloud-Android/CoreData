@@ -7,24 +7,14 @@
 
 从名字可以看出，取名自IOS的CoreData数据库。希望能够支持Relation，并能在保证速度不会差距很大的情况下方便简单的使用。
 
-##### 版本
-
->0.0.13-SNAPSHOT
-
-```
-1、修复在columnName为index等sql特殊字段时候生成sql语法错误的问题
-```
-
-> 0.0.10-SNAPSHOT
 ##### 工程分析
 
 ```
-annotations  --- 注解工程，开发中用到的注解
-base         --- 基础工程，数据库的基础模型和工具类
+base         --- 基础工程，数据库的基础模型、工具类、注解
 compiler     --- 编译库，用于apt或者annotationProcessor
 core         --- 核心代码库，主要用于CoreData对数据库及数据的管理
 cipher       --- 加密库，支持SqlCipher对Sqlite进行加密
-demo         --- 实例
+demo         --- 样例代码
 ```
 
 ##### 接入说明
@@ -34,33 +24,32 @@ demo         --- 实例
    > 接入代码生成工具
 
    ```groovy
-   annotationProcessor 'com.coredata:coredata-compiler:0.0.10-SNAPSHOT'
+   annotationProcessor 'com.github.fangcloud-android.coreData:compiler:0.1.1-SNAPSHOT'
    ```
    > 接入非加密版的库
 
    ```groovy
-   compile 'com.coredata:coredata-core:0.0.10-SNAPSHOT'
+   compile 'com.github.fangcloud-android.coredata:core:0.1.1-SNAPSHOT'
    ```
    > 接入加密版的库
 
    ```groovy
-   compile 'com.coredata:coredata-cipher:0.0.10-SNAPSHOT' // 只需引用此库即可
-   compile 'net.zetetic:android-database-sqlcipher:3.5.7@aar' // 加密库，目前可以支持3.5.7
+   compile 'com.github.fangcloud-android.coredata:cipher:0.1.1-SNAPSHOT' // 只需引用此库即可
    ```
 
 2. 代码接入
 
    > 注解说明
 
-   | 注解类        | 说明     | 作用域   | 其他                                       |
-   | ---------- | ------ | ----- | ---------------------------------------- |
-   | Entity     | 实体类注解  | CLASS | @Entity(tableName = "user")              |
-   | ColumnInfo | 纵列信息注解 | FIELD | @ColumnInfo(name = "author_id")          |
-   | PrimaryKey | 主键的注解  | FIELD | @PrimaryKey                              |
-   | Ignore     | 用于忽略字段 | FIELD | @Ignore，设置此注解的field，将不会被持久化              |
-   | Embedded   | 内嵌类注解  | FIELD | 此注解的field，会将其内部的field作为数据库结构保存           |
-   | Convert    | 数据转换器  | FIELD | @Convert(converter = SerializableListConverter.class, dbType = String.class)，将field转换为可存储类型 |
-   | Relation   | 关联注解   | FIELD | @Relation，此注解的field必须对应一个Entity          |
+   | 注解类     | 说明         | 作用域 | 其他                                                         |
+   | ---------- | ------------ | ------ | ------------------------------------------------------------ |
+   | Entity     | 实体类注解   | CLASS  | @Entity(tableName = "user", primaryKey = "magazine_id")      |
+   | ColumnInfo | 纵列信息注解 | FIELD  | @ColumnInfo(name = "author_id")                              |
+   | PrimaryKey | 主键的注解   | FIELD  | @PrimaryKey                                                  |
+   | Ignore     | 用于忽略字段 | FIELD  | @Ignore，设置此注解的field，将不会被持久化                   |
+   | Embedded   | 内嵌类注解   | FIELD  | 此注解的field，会将其内部的field作为数据库结构保存           |
+   | Convert    | 数据转换器   | FIELD  | @Convert(converter = SerializableListConverter.class, dbType = String.class)，将field转换为可存储类型 |
+   | Relation   | 关联注解     | FIELD  | @Relation，此注解的field必须对应一个Entity                   |
 
    > 示例
 

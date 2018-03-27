@@ -33,6 +33,5 @@ dependencies {
     annotationProcessor project(':compiler')
     implementation project(':cipher')
     implementation project(':core')
-    implementation project(':annotations')
     implementation project(':base')
 }

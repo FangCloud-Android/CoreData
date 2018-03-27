@@ -1,1 +1,1 @@
-include ':demo', ':core', ':compiler', ':annotations', ':base', ':cipher'
+include ':demo', ':core', ':compiler', ':base', ':cipher'

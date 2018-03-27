@@ -22,14 +22,6 @@ ext {
 
     TEST_REPO = '../repo'
 
-//    Properties properties = new Properties()
-//    properties.load(project.rootProject.file('maven.properties').newDataInputStream())
-//
-//    RELEASE_URL = properties.getProperty("RELEASE_URL")
-//    SNAPSHOT_URL = properties.getProperty("SNAPSHOT_URL")
-//    USER_NAME = properties.getProperty("USER_NAME")
-//    PASSWORD = properties.getProperty("PASSWORD")
-
     DEBUG = true
 }
 
