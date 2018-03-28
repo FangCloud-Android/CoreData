@@ -114,3 +114,19 @@ demo         --- 样例代码
    List<Book> boolList = bookCoreDao.queryByKeys(new Long[]{bookId_1, bookId_2, bookId_3});// 根据给定主键数组查询
    List<Book> boolList = bookCoreDao.queryAll(); // 查询全部全部
    ```
+
+3. 混淆
+
+   ```txt
+   # 使用CoreData的混淆代码
+   -keep class * extends com.coredata.core.CoreDao
+   -keep class com.coredata.annotation.Entity
+   -keepnames @com.coredata.annotation.Entity class *
+
+   # 如果使用到加密库，请将下面的代码也做配置
+   -keepclasseswithmembers class com.coredata.cipher.CipherOpenHelper {
+       public <init>(...);
+   }
+   -keep class net.sqlcipher.** { *; }
+   -keep class net.sqlcipher.database.** { *; }
+   ```

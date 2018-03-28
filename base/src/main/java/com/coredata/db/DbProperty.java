@@ -1,7 +1,5 @@
 package com.coredata.db;
 
-import com.coredata.utils.SqlUtils;
-
 /**
  * 存储table字段,type指的是db的数据类型，比如 INT, BIGINT, TEXT等
  */
