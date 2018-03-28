@@ -13,9 +13,10 @@ android {
 }
 
 dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'net.zetetic:android-database-sqlcipher:3.5.9@aar'
-    compile project(':core')
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation 'net.zetetic:android-database-sqlcipher:3.5.9@aar'
+    implementation project(':core')
+    implementation project(':base')
 }
 
 //apply from: 'maven.gradle'
