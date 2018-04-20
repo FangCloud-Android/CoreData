@@ -42,4 +42,22 @@
         android:layout_height="wrap_content"
         android:onClick="deleteAllClick"
         android:text="删除所有"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:onClick="testRxJava"
+        android:text="testRxJava"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="注册"
+        android:onClick="register"/>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="反注册"
+        android:onClick="unRegister" />
 </LinearLayout>

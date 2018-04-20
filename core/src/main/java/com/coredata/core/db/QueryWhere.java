@@ -1,6 +1,8 @@
 package com.coredata.core.db;
 
 import com.coredata.core.ResultSet;
+import com.coredata.core.result.QueryResult;
+import com.coredata.core.rx.ResultObservable;
 
 import java.util.List;
 
@@ -8,15 +10,12 @@ import java.util.List;
  * Created by wangjinpeng on 2017/7/4.
  */
 
-public class QueryWhere<SET extends ResultSet<T>, T> extends Where<SET, T> {
+public class QueryWhere<SET extends ResultSet<T>, T> extends Where<SET, T> implements QueryResult<T> {
 
     public QueryWhere(SET set, String columnName) {
         super(set, columnName);
     }
 
-    public List<T> result() {
-        return set.result();
-    }
 
     public ResultSet<T> groupBy(String expression) {
         return set.groupBy(expression);
@@ -116,5 +115,15 @@ public class QueryWhere<SET extends ResultSet<T>, T> extends Where<SET, T> {
     public QueryWhere<SET, T> like(String expression) {
         super.like(expression);
         return this;
+    }
+
+    @Override
+    public List<T> result() {
+        return set.result();
+    }
+
+    @Override
+    public ResultObservable<T> observable() {
+        return set.observable();
     }
 }

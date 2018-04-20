@@ -3,8 +3,9 @@ package com.coredata.core.db;
 import android.content.ContentValues;
 
 import com.coredata.core.FuncSet;
+import com.coredata.core.result.Result;
 
-public class FuncWhere<SET extends FuncSet<T>, T> extends Where<SET, T> {
+public class FuncWhere<SET extends FuncSet<T>, T> extends Where<SET, T> implements Result<ContentValues> {
 
     public FuncWhere(SET set, String columnName) {
         super(set, columnName);
@@ -15,6 +16,7 @@ public class FuncWhere<SET extends FuncSet<T>, T> extends Where<SET, T> {
      *
      * @see FuncSet#result()
      */
+    @Override
     public ContentValues result() {
         return set.result();
     }

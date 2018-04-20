@@ -4,10 +4,13 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.SQLException;
-import android.util.Log;
 
 import com.coredata.core.db.CoreDatabase;
 import com.coredata.core.db.CoreStatement;
+import com.coredata.core.rx.QueryData;
+import com.coredata.core.rx.ResultObservable;
+import com.coredata.core.rx.ResultQuery;
+import com.coredata.core.utils.Debugger;
 import com.coredata.db.DbProperty;
 import com.coredata.db.Property;
 import com.coredata.utils.SqlUtils;
@@ -15,6 +18,9 @@ import com.coredata.utils.SqlUtils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.Subject;
 
 /**
  * Dao，实体都会拥有一个Dao实例，可进行增删改查
@@ -185,6 +191,10 @@ public abstract class CoreDao<T> {
         this.cdInstance = coreData;
     }
 
+    CoreData getCoreData() {
+        return cdInstance;
+    }
+
     /**
      * 获取表名
      *
@@ -272,14 +282,18 @@ public abstract class CoreDao<T> {
         if (t == null) {
             return false;
         }
-        synchronized (lock) {
-            CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
-            cdb.beginTransaction();
-            replace(t, cdb);
-            cdb.setTransactionSuccessful();
-            cdb.endTransaction();
+        try {
+            synchronized (lock) {
+                CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
+                cdb.beginTransaction();
+                replace(t, cdb);
+                cdb.setTransactionSuccessful();
+                cdb.endTransaction();
+            }
+            return true;
+        } finally {
+            sendTrigger(new QueryData(this));
         }
-        return true;
     }
 
     /**
@@ -289,14 +303,18 @@ public abstract class CoreDao<T> {
      * @return 是否插入成功
      */
     public boolean replace(Collection<T> tCollection) {
-        synchronized (lock) {
-            CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
-            cdb.beginTransaction();
-            replace(tCollection, cdb);
-            cdb.setTransactionSuccessful();
-            cdb.endTransaction();
+        try {
+            synchronized (lock) {
+                CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
+                cdb.beginTransaction();
+                replace(tCollection, cdb);
+                cdb.setTransactionSuccessful();
+                cdb.endTransaction();
+            }
+            return true;
+        } finally {
+            sendTrigger(new QueryData(this));
         }
-        return true;
     }
 
     /**
@@ -340,30 +358,6 @@ public abstract class CoreDao<T> {
     }
 
     /**
-     * 根据给定的条件进行查询
-     *
-     * @param sql sql语句
-     * @return 实体对象List
-     */
-    List<T> querySqlInternal(String sql) {
-        synchronized (lock) {
-            Log.d("CoreData", "CoreDao--querySqlInternal--sql:" + sql);
-            CoreDatabase cdb;
-            Cursor cursor = null;
-            try {
-                cdb = cdInstance.getCoreDataBase().getReadableDatabase();
-                cursor = cdb.rawQuery(sql, null);
-                return bindCursor(cursor);
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                closeCursor(cursor);
-            }
-            return new ArrayList<>();
-        }
-    }
-
-    /**
      * 查询，生成一个查询用的结构处理集
      *
      * @return 创建一个结果处理集合
@@ -380,7 +374,7 @@ public abstract class CoreDao<T> {
      */
     public Cursor querySqlCursor(String sql) {
         synchronized (lock) {
-            Log.d("CoreData", "CoreDao--querySqlInternal--sql:" + sql);
+            Debugger.d("CoreData", "CoreDao--querySqlInternal--sql:" + sql);
             CoreDatabase cdb;
             try {
                 cdb = cdInstance.getCoreDataBase().getReadableDatabase();
@@ -428,6 +422,11 @@ public abstract class CoreDao<T> {
                 .execute();
     }
 
+    /**
+     * 返回一个删除的操作集合
+     *
+     * @return 删除操作集合，这里可以写入where条件
+     */
     public DeleteSet<T> delete() {
         return new DeleteSet<>(this);
     }
@@ -442,21 +441,6 @@ public abstract class CoreDao<T> {
     }
 
     /**
-     * 给定sql更新或者删除
-     *
-     * @param sql
-     * @return 是否删除成功
-     */
-    boolean updateDeleteInternal(String sql) {
-        synchronized (lock) {
-            Log.d("CoreData", "CoreDao--updateDeleteInternal--sql:" + sql);
-            CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
-            CoreStatement cs = cdb.compileStatement(sql);
-            return cs.executeUpdateDelete() > 0;
-        }
-    }
-
-    /**
      * 函数功能
      *
      * @return 函数操作集
@@ -466,11 +450,95 @@ public abstract class CoreDao<T> {
     }
 
     /**
+     * 根据给定的条件进行查询
+     *
+     * @param sql sql语句
+     * @return 实体对象List
+     */
+    List<T> querySqlInternal(String sql) {
+        synchronized (lock) {
+            Debugger.d("CoreData", "CoreDao--querySqlInternal--sql:" + sql);
+            CoreDatabase cdb;
+            Cursor cursor = null;
+            try {
+                cdb = cdInstance.getCoreDataBase().getReadableDatabase();
+                cursor = cdb.rawQuery(sql, null);
+                return bindCursor(cursor);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                closeCursor(cursor);
+            }
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * 给定sql更新或者删除
+     *
+     * @param sql
+     * @return 是否删除成功
+     */
+    boolean updateDeleteInternal(String sql) {
+        try {
+            synchronized (lock) {
+                Debugger.d("CoreData", "CoreDao--updateDeleteInternal--sql:" + sql);
+                CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
+                CoreStatement cs = cdb.compileStatement(sql);
+                return cs.executeUpdateDelete() > 0;
+            }
+        } finally {
+            sendTrigger(new QueryData(this));
+        }
+    }
+
+    /**
+     * 给定sql查询结果并转换为ContentValues
+     *
+     * @param sql
+     * @return
+     */
+    List<ContentValues> queryContentValuesInternal(String sql) {
+        List<ContentValues> contentValuesList = new ArrayList<>();
+        Cursor cursor = null;
+        try {
+            cursor = querySqlCursor(sql);
+            while (cursor.moveToNext()) {
+                ContentValues contentValues = new ContentValues();
+                DatabaseUtils.cursorRowToContentValues(cursor, contentValues);
+                contentValuesList.add(contentValues);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            closeCursor(cursor);
+        }
+        return contentValuesList;
+    }
+
+    ResultObservable<T> observable(ResultSet<T> resultSet) {
+        final ResultQuery<T> resultQuery = new ResultQuery<>(this, resultSet);
+        final Subject<QueryData> triggers = getCoreData().getTriggers();
+        return triggers
+                .observeOn(Schedulers.io())
+                // 过滤 判断当前的 修改是否符合 当前查询
+                .filter(resultQuery.getPredicateQuery())
+                // 映射为ResultSet
+                .map(resultQuery.getMapResult())
+                // 在注册一开始就发射一组数据
+                .startWith(resultSet)
+                // 做数据映射
+                .map(resultQuery.getMapList())
+                // Observable 转换
+                .to(ResultObservable.<T>toFunction());
+    }
+
+    /**
      * 关闭游标
      *
      * @param cursor 游标
      */
-    void closeCursor(Cursor cursor) {
+    private void closeCursor(Cursor cursor) {
         try {
             if (cursor != null) {
                 cursor.close();
@@ -478,5 +546,14 @@ public abstract class CoreDao<T> {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 发送事件
+     *
+     * @param data 封装了当前操作集
+     */
+    private void sendTrigger(QueryData data) {
+        getCoreData().getTriggers().onNext(data);
     }
 }

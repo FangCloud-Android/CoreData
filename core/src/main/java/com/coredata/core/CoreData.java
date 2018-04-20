@@ -4,6 +4,8 @@ import android.app.Application;
 
 import com.coredata.core.db.Migration;
 import com.coredata.core.io.ObjectInputStreamWrap;
+import com.coredata.core.rx.QueryData;
+import com.coredata.core.utils.Debugger;
 import com.coredata.core.utils.ReflectUtils;
 
 import java.io.Serializable;
@@ -13,6 +15,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import io.reactivex.subjects.PublishSubject;
+import io.reactivex.subjects.Subject;
 
 /**
  * CoreData核心类，用于构建实例，初始化配置等等
@@ -116,9 +121,13 @@ public final class CoreData {
     private static final String TAG_DEFAULT_INSTANCE = "default";
 
     /**
-     * 实例集合
+     * CoreData实例集合
      */
     private static Map<String, CoreData> instanceMap = new ConcurrentHashMap<>();
+
+    static {
+        Debugger.setTag("CoreData");
+    }
 
     /**
      * 此方法是初始化CoreData的入口
@@ -134,6 +143,10 @@ public final class CoreData {
         instance = new CoreData(builder);
         instanceMap.put(builder.tag, instance);
         instance.onCreate(application);
+    }
+
+    public static void setDebugEnable(boolean enable) {
+        Debugger.setEnable(enable);
     }
 
     /**
@@ -176,6 +189,11 @@ public final class CoreData {
     private Builder builder;
 
     /**
+     * RxJava所用到的触发器，每一个实例一个，不同实例间不共享
+     */
+    private final Subject<QueryData> triggers = PublishSubject.create();
+
+    /**
      * 私有界面，创建数据库入口
      *
      * @param builder
@@ -213,5 +231,9 @@ public final class CoreData {
 
     public CoreDatabaseManager getCoreDataBase() {
         return coreDataBaseManager;
+    }
+
+    Subject<QueryData> getTriggers() {
+        return triggers;
     }
 }

@@ -1,8 +1,6 @@
 # CoreData
 关系型数据库
 
-
-
 ##### 愿景
 
 从名字可以看出，取名自IOS的CoreData数据库。希望能够支持Relation，并能在保证速度不会差距很大的情况下方便简单的使用。
@@ -130,3 +128,33 @@ demo         --- 样例代码
    -keep class net.sqlcipher.** { *; }
    -keep class net.sqlcipher.database.** { *; }
    ```
+
+4. RxJava支持
+
+  > SNAPSHOT-O.1.3 版本支持了rxjava，支持表级别的数据变动监听
+  ```java
+  private Disposable disposable;
+  public void register(View view) {
+      if (disposable != null) {
+          return;
+      }
+      disposable = CoreData.defaultInstance()
+          .dao(Book.class)
+          .query() // 此处还可以继续补充查询条件
+          .observable()
+          .subscribe(new Consumer<List<Book>>() {
+              @Override
+              public void accept(List<Book> books) {
+                  // 此处处理收到的数据，subdcribe就会收到第一次数据
+                  // 当数据库变动影响到所查询的数据时，还会收到
+              }
+          });
+  }
+
+  public void unRegister(View view) {
+      if (disposable != null) {
+          disposable.dispose();
+      }
+      disposable = null;
+  }
+  ```

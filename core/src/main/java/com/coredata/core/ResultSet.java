@@ -2,6 +2,8 @@ package com.coredata.core;
 
 import com.coredata.core.db.Order;
 import com.coredata.core.db.QueryWhere;
+import com.coredata.core.result.QueryResult;
+import com.coredata.core.rx.ResultObservable;
 
 import java.util.List;
 
@@ -10,16 +12,11 @@ import java.util.List;
  *
  * @param <T> 对应的实体类型
  */
-public class ResultSet<T> extends BaseSet<T> {
-
+public class ResultSet<T> extends BaseSet<T> implements QueryResult<T> {
 
     ResultSet(CoreDao<T> coreDao) {
         super(coreDao);
         append("SELECT * FROM ").append(coreDao.getTableName());
-    }
-
-    public List<T> result() {
-        return getCoreDao().querySqlInternal(getSql());
     }
 
     public QueryWhere<ResultSet<T>, T> where(String columnName) {
@@ -54,5 +51,15 @@ public class ResultSet<T> extends BaseSet<T> {
         append(" OFFSET ")
                 .append(String.valueOf(offset));
         return this;
+    }
+
+    @Override
+    public ResultObservable<T> observable() {
+        return getCoreDao().observable(this);
+    }
+
+    @Override
+    public List<T> result() {
+        return getCoreDao().querySqlInternal(getSql());
     }
 }

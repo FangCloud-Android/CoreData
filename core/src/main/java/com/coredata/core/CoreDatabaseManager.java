@@ -3,12 +3,12 @@ package com.coredata.core;
 import android.content.Context;
 import android.database.Cursor;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.coredata.core.db.CoreDatabase;
 import com.coredata.core.db.Migration;
 import com.coredata.core.db.OpenHelperInterface;
 import com.coredata.core.normal.NormalOpenHelper;
+import com.coredata.core.utils.Debugger;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -82,7 +82,7 @@ public class CoreDatabaseManager {
         for (Map.Entry<Class, CoreDao> entry : coreDaoHashMap.entrySet()) {
             entry.getValue().onDataBaseCreate(cdb);
         }
-        Log.d("wanpg", "CoreDataBaseHelper----onCreate");
+        Debugger.d("wanpg", "CoreDataBaseHelper----onCreate");
     }
 
     public void onUpgrade(CoreDatabase cdb, int oldVersion, int newVersion) {
@@ -119,7 +119,7 @@ public class CoreDatabaseManager {
             }
             migrations.clear();
         }
-        Log.d("wanpg", "CoreDataBaseHelper----onUpgrade");
+        Debugger.d("wanpg", "CoreDataBaseHelper----onUpgrade");
     }
 
     public void onDowngrade(CoreDatabase cdb, int oldVersion, int newVersion) {

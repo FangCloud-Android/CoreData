@@ -1,18 +1,19 @@
 package com.coredata.core;
 
 import android.content.ContentValues;
-import android.database.Cursor;
-import android.database.DatabaseUtils;
 
 import com.coredata.core.db.FuncWhere;
+import com.coredata.core.result.Result;
 import com.coredata.utils.SqlUtils;
+
+import java.util.List;
 
 /**
  * 函数集
  *
  * @param <T> 表相关的实体类型
  */
-public class FuncSet<T> extends BaseSet<T> {
+public class FuncSet<T> extends BaseSet<T> implements Result<ContentValues> {
 
     private boolean funcAdded = false;
     private boolean hasWhere = false;
@@ -20,30 +21,6 @@ public class FuncSet<T> extends BaseSet<T> {
     FuncSet(CoreDao<T> coreDao) {
         super(coreDao);
         append("SELECT");
-    }
-
-    /**
-     * 获取结果
-     *
-     * @return 返回给定类型的结果
-     */
-    public ContentValues result() {
-        if (!hasWhere) {
-            appendFrom();
-        }
-        ContentValues contentValues = new ContentValues();
-        Cursor cursor = null;
-        try {
-            cursor = getCoreDao().querySqlCursor(getSql());
-            if (cursor.moveToNext()) {
-                DatabaseUtils.cursorRowToContentValues(cursor, contentValues);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            getCoreDao().closeCursor(cursor);
-        }
-        return contentValues;
     }
 
     private void appendFunc(String funcStr, String asName) {
@@ -116,6 +93,18 @@ public class FuncSet<T> extends BaseSet<T> {
         hasWhere = true;
         appendFrom();
         return new FuncWhere<>(this, columnName);
+    }
+
+    @Override
+    public ContentValues result() {
+        if (!hasWhere) {
+            appendFrom();
+        }
+        List<ContentValues> contentValuesList = getCoreDao().queryContentValuesInternal(getSql());
+        if (contentValuesList != null && !contentValuesList.isEmpty()) {
+            return contentValuesList.get(0);
+        }
+        return null;
     }
 }
 
