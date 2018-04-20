@@ -131,10 +131,10 @@ demo         --- 样例代码
 
 4. RxJava支持
 
-  > SNAPSHOT-O.1.3 版本支持了rxjava，支持表级别的数据变动监听
-  ```java
-  private Disposable disposable;
-  public void register(View view) {
+   > O.1.3-SNAPSHOT 版本支持了rxjava，支持表级别的数据变动监听
+   ```java
+   private Disposable disposable;
+   public void register(View view) {
       if (disposable != null) {
           return;
       }
@@ -149,12 +149,12 @@ demo         --- 样例代码
                   // 当数据库变动影响到所查询的数据时，还会收到
               }
           });
-  }
+   }
 
-  public void unRegister(View view) {
+   public void unRegister(View view) {
       if (disposable != null) {
           disposable.dispose();
       }
       disposable = null;
-  }
-  ```
+   }
+   ```
