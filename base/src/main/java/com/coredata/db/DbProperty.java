@@ -16,7 +16,7 @@ public class DbProperty {
     }
 
     /**
-     * 注意：只比较type、name
+     * 全部比较，主键也纳入比对范围，当主键不一致，也说明是不同的列
      *
      * @param o 给定参数
      * @return true 为相等，false为不相等
@@ -25,7 +25,8 @@ public class DbProperty {
     public boolean equals(Object o) {
         return o instanceof DbProperty
                 && this.type.equals(((DbProperty) o).type)
-                && this.name.equals(((DbProperty) o).name);
+                && this.name.equals(((DbProperty) o).name)
+                && this.primaryKey == ((DbProperty) o).primaryKey;
     }
 
     /**

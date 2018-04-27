@@ -3,6 +3,7 @@ package com.wanpg.core.test;
 import android.app.Application;
 
 import com.coredata.core.CoreData;
+import com.wanpg.core.test.migration.Migration14;
 import com.wanpg.core.test.migration.Migration15;
 import com.wanpg.core.test.migration.Migration16;
 import com.wanpg.core.test.model.Author;
@@ -32,9 +33,10 @@ public class BaseApplication extends Application {
                                 Time.class,
                                 Magazine.class,
                                 MigrationModel.class)
+                        .addMigration(new Migration14())
                         .addMigration(new Migration16())
                         .addMigration(new Migration15())
-                        .version(17)
+                        .version(16)
         );
     }
 }

@@ -54,10 +54,10 @@ public final class MigrationWrap {
      * @param newVersion 新版本
      */
     void onUpgrade(CoreDatabase cdb, int oldVersion, int newVersion) {
-        // 先取出老的表结构
-        List<String> originTableList = DBUtils.tableList(cdb);
         // 此处做自定义的数据迁移
-        onDataMigrateStart(cdb, oldVersion, newVersion, originTableList);
+        onDataMigrateStart(cdb, oldVersion, newVersion);
+        // 先取出老的表结构，要在onDataMigrateStart后执行，因为自定义migration可能会删除部分表
+        List<String> originTableList = DBUtils.tableList(cdb);
         // 如果存在执行升级，不存在执行创建
         for (Map.Entry<Class, CoreDao> entry : coreDaoHashMap.entrySet()) {
             CoreDao value = entry.getValue();
@@ -109,13 +109,13 @@ public final class MigrationWrap {
      * @param db
      * @param oldVersion
      * @param newVersion
-     * @param originTableList
      */
-    private void onDataMigrateStart(CoreDatabase db, int oldVersion, int newVersion, List<String> originTableList) {
+    private void onDataMigrateStart(CoreDatabase db, int oldVersion, int newVersion) {
         // 执行数据数据迁移
         if (migrations == null) {
             return;
         }
+        List<String> originTableList = DBUtils.tableList(db);
         // 保留需要迁移的migration
         Iterator<Migration> iterator = migrations.iterator();
         while (iterator.hasNext()) {

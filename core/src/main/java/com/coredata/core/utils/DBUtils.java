@@ -27,7 +27,7 @@ public class DBUtils {
                 contentValuesList.add(cv);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Debugger.e(e);
         } finally {
             closeCursor(cursor);
         }
@@ -57,7 +57,7 @@ public class DBUtils {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            Debugger.e(e);
         } finally {
             closeCursor(cursor);
         }

@@ -55,4 +55,21 @@ public class Debugger {
         }
         Log.i(tag, builder.toString());
     }
+
+    public static void e(Throwable e, String... infos) {
+        if (!enable) {
+            return;
+        }
+        StringBuilder builder = new StringBuilder();
+        if (infos != null) {
+            for (Object info : infos) {
+                if (info == null) {
+                    builder.append("null");
+                } else {
+                    builder.append(String.valueOf(info));
+                }
+            }
+        }
+        Log.e(tag, builder.toString(), e);
+    }
 }
