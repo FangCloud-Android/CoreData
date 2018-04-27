@@ -36,6 +36,20 @@ public class SqlUtils {
         return "DROP TABLE IF EXISTS " + tableName;
     }
 
+    /**
+     * 返回查询所有的数据的sql
+     *
+     * @param tableName 表名
+     * @return sql字符串
+     */
+    public static String getSelectAllSql(String tableName) {
+        return "SELECT * FROM " + tableName;
+    }
+
+    public static String getDeleteAllDataSql(String tableName) {
+        return "DELETE FROM " + tableName;
+    }
+
     public static String formatValue(Object object) {
         if (object == null) {
             return "NULL";

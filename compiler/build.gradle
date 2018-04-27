@@ -1,9 +1,9 @@
 apply plugin: 'java'
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.squareup:javapoet:1.9.0'
-    implementation project(':base')
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile 'com.squareup:javapoet:1.9.0'
+    compile project(':base')
 }
 
 sourceCompatibility = "1.7"

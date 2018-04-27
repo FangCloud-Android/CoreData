@@ -10,9 +10,11 @@ import android.widget.Toast;
 
 import com.coredata.core.CoreDao;
 import com.coredata.core.CoreData;
+import com.coredata.core.utils.Debugger;
 import com.wanpg.core.test.model.Author;
 import com.wanpg.core.test.model.Book;
 import com.wanpg.core.test.model.Desc;
+import com.wanpg.core.test.model.MigrationModel;
 import com.wanpg.core.test.model.Tag;
 import com.wanpg.coredata.R;
 
@@ -41,12 +43,6 @@ public class MainActivity extends AppCompatActivity {
     private int index = 0;
 
     public void addBookClick(View view) {
-//        new Thread() {
-//            @Override
-//            public void run() {
-//
-//            }
-//        }.start();
         index++;
         Book book = new Book();
         book.id = index;
@@ -226,5 +222,18 @@ public class MainActivity extends AppCompatActivity {
             disposable.dispose();
         }
         disposable = null;
+    }
+
+    public void addMigrationModel(View view) {
+        List<MigrationModel> modelList = new ArrayList<>();
+        modelList.add(MigrationModel.create(1, "name_1", "address_1"));
+        modelList.add(MigrationModel.create(2, "name_2", "address_2"));
+        modelList.add(MigrationModel.create(3, "name_3", "address_3"));
+        modelList.add(MigrationModel.create(4, "name_4", "address_4"));
+        modelList.add(MigrationModel.create(5, "name_5", "address_5"));
+        modelList.add(MigrationModel.create(6, "name_6", "address_6"));
+        CoreDao<MigrationModel> dao = CoreData.defaultInstance().dao(MigrationModel.class);
+        dao.replace(modelList);
+        Debugger.d("已插入的数据：", dao.queryAll().size());
     }
 }

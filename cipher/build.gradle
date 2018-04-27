@@ -1,22 +1,21 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion "26.0.2"
+    compileSdkVersion compile_sdk
+    buildToolsVersion build_tools
 
     defaultConfig {
-        minSdkVersion 14
-        targetSdkVersion 26
+        minSdkVersion min_sdk
+        targetSdkVersion target_sdk
         versionCode 1
         versionName "1.0"
     }
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'net.zetetic:android-database-sqlcipher:3.5.9@aar'
-    implementation project(':core')
-    implementation project(':base')
+    api fileTree(include: ['*.jar'], dir: 'libs')
+    api 'net.zetetic:android-database-sqlcipher:3.5.9@aar'
+    api project(':core')
 }
 
 //apply from: 'maven.gradle'

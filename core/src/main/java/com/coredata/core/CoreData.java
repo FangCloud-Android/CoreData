@@ -2,7 +2,7 @@ package com.coredata.core;
 
 import android.app.Application;
 
-import com.coredata.core.db.Migration;
+import com.coredata.core.db.migrate.Migration;
 import com.coredata.core.io.ObjectInputStreamWrap;
 import com.coredata.core.rx.QueryData;
 import com.coredata.core.utils.Debugger;

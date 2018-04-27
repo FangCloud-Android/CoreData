@@ -3,9 +3,12 @@ package com.wanpg.core.test;
 import android.app.Application;
 
 import com.coredata.core.CoreData;
+import com.wanpg.core.test.migration.Migration15;
+import com.wanpg.core.test.migration.Migration16;
 import com.wanpg.core.test.model.Author;
 import com.wanpg.core.test.model.Book;
 import com.wanpg.core.test.model.Magazine;
+import com.wanpg.core.test.model.MigrationModel;
 import com.wanpg.core.test.model.Time;
 
 import java.io.File;
@@ -22,13 +25,16 @@ public class BaseApplication extends Application {
         CoreData.init(this, CoreData.Builder.builder()
 //                .name(getExternalCacheDir() + File.separator + "test.db")
 //                .password("123456")
-                .name(getExternalCacheDir() + File.separator + "test_nopwd.db")
-                .register(
-                        Book.class,
-                        Author.class,
-                        Time.class,
-                        Magazine.class)
-                .version(13)
+                        .name(getExternalCacheDir() + File.separator + "test_nopwd.db")
+                        .register(
+                                Book.class,
+                                Author.class,
+                                Time.class,
+                                Magazine.class,
+                                MigrationModel.class)
+                        .addMigration(new Migration16())
+                        .addMigration(new Migration15())
+                        .version(17)
         );
     }
 }
