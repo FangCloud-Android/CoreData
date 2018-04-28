@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Created by wangjinpeng on 2017/6/26.
+ * 转换工具类，用于将给定参数转换为目标结构
  */
 
 public class ConvertUtils {
@@ -74,7 +74,7 @@ public class ConvertUtils {
     }
 
     public static List<String> listFromString(String s, String splitCharacter) {
-        if (s != null) {
+        if (s != null && !s.equals("")) {
             String[] split = s.split(splitCharacter);
             List<String> tags = new ArrayList<>();
             if (split.length > 0) {
@@ -101,7 +101,7 @@ public class ConvertUtils {
     }
 
     public static String[] arrayFromString(String s, String splitCharacter) {
-        if (s != null) {
+        if (s != null && !s.equals("")) {
             return s.split(splitCharacter);
         }
         return null;
