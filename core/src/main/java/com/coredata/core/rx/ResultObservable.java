@@ -24,10 +24,6 @@ public class ResultObservable<T> extends Observable<List<T>> {
         this.observable = observable;
     }
 
-    public void execute(){
-
-    }
-
     @Override
     protected void subscribeActual(final Observer<? super List<T>> observer) {
         observable.subscribe(new ResultObserver<>(observer));

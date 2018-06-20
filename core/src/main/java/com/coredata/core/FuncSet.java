@@ -104,7 +104,7 @@ public class FuncSet<T> extends BaseSet<T> implements Result<ContentValues> {
         if (contentValuesList != null && !contentValuesList.isEmpty()) {
             return contentValuesList.get(0);
         }
-        return null;
+        return new ContentValues();
     }
 }
 
