@@ -67,19 +67,19 @@ public final class CoreDatabaseManager {
     }
 
     public void onCreate(CoreDatabase cdb) {
+        Debugger.d("CoreDataBaseHelper----onCreate");
         for (Map.Entry<Class, CoreDao> entry : coreDaoHashMap.entrySet()) {
             migrationWrap.onDataBaseCreate(cdb, entry.getValue());
         }
-        Debugger.d("CoreDataBaseHelper----onCreate");
     }
 
     public void onUpgrade(CoreDatabase cdb, int oldVersion, int newVersion) {
+        Debugger.d("CoreDataBaseHelper----onUpgrade", "--oldVersion:", oldVersion, "--newVersion:", newVersion);
         migrationWrap.onUpgrade(cdb, oldVersion, newVersion);
-        Debugger.d("CoreDataBaseHelper----onUpgrade");
     }
 
     public void onDowngrade(CoreDatabase cdb, int oldVersion, int newVersion) {
+        Debugger.d("CoreDataBaseHelper----onDowngrade", "--oldVersion:", oldVersion, "--newVersion:", newVersion);
         migrationWrap.onDowngrade(cdb, oldVersion, newVersion);
-        Debugger.d("CoreDataBaseHelper----onDowngrade");
     }
 }

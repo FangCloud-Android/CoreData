@@ -118,7 +118,9 @@ public abstract class CoreDao<T> {
      * @return 是否插入成功
      */
     protected boolean executeInsert(List<T> tList, CoreDatabase cdb) {
-        CoreStatement cs = cdb.compileStatement(getInsertSql());
+        String insertSql = getInsertSql();
+        Debugger.d("CoreDao--executeInsert--sql:", insertSql, "--data size:", tList == null ? 0 : tList.size());
+        CoreStatement cs = cdb.compileStatement(insertSql);
         for (T t : tList) {
             bindStatement(cs, t);
             cs.executeInsert();
@@ -228,7 +230,7 @@ public abstract class CoreDao<T> {
      */
     public Cursor querySqlCursor(String sql) {
         synchronized (lock) {
-            Debugger.d("CoreData", "CoreDao--querySqlInternal--sql:" + sql);
+            Debugger.d("CoreDao--querySqlCursor--sql:" + sql);
             CoreDatabase cdb;
             try {
                 cdb = cdInstance.getCoreDataBase().getReadableDatabase();
@@ -311,7 +313,7 @@ public abstract class CoreDao<T> {
      */
     List<T> querySqlInternal(String sql) {
         synchronized (lock) {
-            Debugger.d("CoreData", "CoreDao--querySqlInternal--sql:" + sql);
+            Debugger.d("CoreDao--querySqlInternal--sql:" + sql);
             CoreDatabase cdb;
             Cursor cursor = null;
             try {
@@ -336,7 +338,7 @@ public abstract class CoreDao<T> {
     boolean updateDeleteInternal(String sql) {
         try {
             synchronized (lock) {
-                Debugger.d("CoreData", "CoreDao--updateDeleteInternal--sql:" + sql);
+                Debugger.d("CoreDao--updateDeleteInternal--sql:" + sql);
                 CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
                 CoreStatement cs = cdb.compileStatement(sql);
                 return cs.executeUpdateDelete() > 0;

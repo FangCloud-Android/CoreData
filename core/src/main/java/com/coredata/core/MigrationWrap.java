@@ -8,7 +8,6 @@ import com.coredata.core.db.CoreDatabase;
 import com.coredata.core.db.migrate.DataSet;
 import com.coredata.core.db.migrate.Migration;
 import com.coredata.core.utils.DBUtils;
-import com.coredata.core.utils.Debugger;
 import com.coredata.db.DbProperty;
 import com.coredata.db.Property;
 import com.coredata.utils.SqlUtils;
@@ -100,7 +99,6 @@ public final class MigrationWrap {
         for (String leftTableName : originTableList) {
             DBUtils.dropTable(cdb, leftTableName);
         }
-        Debugger.d("CoreDataBaseHelper----onDowngrade");
     }
 
     /**
@@ -116,7 +114,7 @@ public final class MigrationWrap {
             return;
         }
         List<String> originTableList = DBUtils.tableList(db);
-        // 保留需要迁移的migration
+        // 保留需要迁移的migration，过滤掉版本过低的迁移
         Iterator<Migration> iterator = migrations.iterator();
         while (iterator.hasNext()) {
             Migration next = iterator.next();
@@ -126,6 +124,7 @@ public final class MigrationWrap {
             }
         }
 
+        // 如果migrations为空，则不需要做自定义迁移
         if (migrations.isEmpty()) {
             return;
         }
@@ -137,7 +136,7 @@ public final class MigrationWrap {
             String[] migrationTables = migration.dataMigrationTables();
             if (migrationTables != null && migrationTables.length > 0) {
                 for (String table : migrationTables) {
-                    // 取到变更表的数据
+                    // 取出变更表的数据
                     DataSet dataSet = dataSetMap.get(table);
                     if (dataSet == null) {
                         List<ContentValues> contentValuesList = null;
@@ -147,6 +146,7 @@ public final class MigrationWrap {
                         dataSet = new DataSet(table, contentValuesList);
                         dataSetMap.put(table, dataSet);
                     }
+                    // 调用migration
                     migration.onDataMigrate(dataSet);
                     // 表名和数据都会有可能进行变更
                     // 数据不用管，当表名变更时map中的key也要做变更

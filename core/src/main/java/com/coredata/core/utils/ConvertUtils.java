@@ -37,7 +37,7 @@ public class ConvertUtils {
     }
 
     public static <T> T fromString(String s, Class<T> tClass) {
-        if (s != null) {
+        if (s != null && !s.equals("")) {
             ObjectInputStream ois = null;
             try {
                 byte[] data = Base64.decode(s, Base64.NO_WRAP);

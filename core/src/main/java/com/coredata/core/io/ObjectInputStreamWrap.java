@@ -25,9 +25,7 @@ public class ObjectInputStreamWrap extends ObjectInputStream {
             serialVersionUID.setAccessible(false);
             if (o != null) {
                 Long value = Long.valueOf(o.toString());
-                if (value != null) {
-                    classMap.put(value, aClass);
-                }
+                classMap.put(value, aClass);
             }
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
@@ -55,12 +53,23 @@ public class ObjectInputStreamWrap extends ObjectInputStream {
     @Override
     protected ObjectStreamClass readClassDescriptor() throws IOException, ClassNotFoundException {
         ObjectStreamClass objectStreamClass = super.readClassDescriptor();
-        if (aClass != null) {
-            objectStreamClass = ObjectStreamClass.lookup(aClass);
-        } else {
-            Class<? extends Serializable> aClass = classMap.get(objectStreamClass.getSerialVersionUID());
-            if (aClass != null) {
-                objectStreamClass = ObjectStreamClass.lookup(aClass);
+        Class<?> aClass1 = aClass;
+        if (aClass1 == null) {
+            aClass1 = classMap.get(objectStreamClass.getSerialVersionUID());
+        }
+        if (aClass1 != null) {
+            if (!aClass1.getName().equals(objectStreamClass.getName())) {
+                try {
+                    @SuppressWarnings("JavaReflectionMemberAccess")
+                    Field name = ObjectStreamClass.class.getDeclaredField("name");
+                    name.setAccessible(true);
+                    name.set(objectStreamClass, aClass1.getName());
+                    name.setAccessible(false);
+                } catch (NoSuchFieldException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
             }
         }
         return objectStreamClass;
