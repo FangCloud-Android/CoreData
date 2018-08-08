@@ -6,11 +6,11 @@ import com.coredata.core.BaseSet;
  * Created by wangjinpeng on 2017/7/4.
  */
 
-public class UpdateDeleteWhere<SI extends UpdateDeleteSetInterface<T>, SET extends BaseSet<T>, T> extends Where<SET, T> {
+public class UpdateDeleteWhere<SI extends IUpdateDelete<T>, SET extends BaseSet<T>, T> extends Where<SET, T> {
 
-    private UpdateDeleteSetInterface setInterface;
+    private IUpdateDelete setInterface;
 
-    public UpdateDeleteWhere(UpdateDeleteSetInterface<T> setInterface, SET set, String columnName) {
+    public UpdateDeleteWhere(IUpdateDelete<T> setInterface, SET set, String columnName) {
         super(set, columnName);
         this.setInterface = setInterface;
     }

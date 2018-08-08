@@ -1,13 +1,14 @@
 package com.coredata.core;
 
-import com.coredata.core.db.UpdateDeleteSetInterface;
+import com.coredata.core.async.AsyncFuture;
+import com.coredata.core.db.IUpdateDelete;
 import com.coredata.core.db.UpdateDeleteWhere;
 
 /**
- * Created by wangjinpeng on 2017/6/27.
+ * 删除操作集
  */
 
-public class DeleteSet<T> extends BaseSet<T> implements UpdateDeleteSetInterface<T> {
+public class DeleteSet<T> extends BaseSet<T> implements IUpdateDelete<T> {
 
     DeleteSet(CoreDao<T> coreDao) {
         super(coreDao);
@@ -20,7 +21,12 @@ public class DeleteSet<T> extends BaseSet<T> implements UpdateDeleteSetInterface
     }
 
     @Override
-    public UpdateDeleteWhere<UpdateDeleteSetInterface<T>, ? extends BaseSet<T>, T> where(String columnName) {
+    public AsyncFuture<Boolean> executeAsync() {
+        return getCoreDao().updateDeleteAsyncInternal(getSql());
+    }
+
+    @Override
+    public UpdateDeleteWhere<IUpdateDelete<T>, ? extends BaseSet<T>, T> where(String columnName) {
         return new UpdateDeleteWhere<>(this, this, columnName);
     }
 }

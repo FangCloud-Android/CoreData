@@ -5,7 +5,7 @@ import android.content.Context;
 import com.coredata.core.CoreData;
 import com.coredata.core.CoreDatabaseManager;
 import com.coredata.core.db.CoreDatabase;
-import com.coredata.core.db.OpenHelperInterface;
+import com.coredata.core.db.IOpenHelper;
 
 import net.sqlcipher.database.SQLiteDatabase;
 import net.sqlcipher.database.SQLiteOpenHelper;
@@ -15,7 +15,7 @@ import net.sqlcipher.database.SQLiteOpenHelper;
  *
  * @author wangjinpeng
  */
-public class CipherOpenHelper extends SQLiteOpenHelper implements OpenHelperInterface {
+public class CipherOpenHelper extends SQLiteOpenHelper implements IOpenHelper {
 
     private String password;
     private String instanceTag;

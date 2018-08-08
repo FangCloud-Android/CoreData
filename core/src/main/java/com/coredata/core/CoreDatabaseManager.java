@@ -4,7 +4,7 @@ import android.content.Context;
 import android.text.TextUtils;
 
 import com.coredata.core.db.CoreDatabase;
-import com.coredata.core.db.OpenHelperInterface;
+import com.coredata.core.db.IOpenHelper;
 import com.coredata.core.db.migrate.Migration;
 import com.coredata.core.normal.NormalOpenHelper;
 import com.coredata.core.utils.Debugger;
@@ -20,7 +20,7 @@ public final class CoreDatabaseManager {
 
     private final Map<Class, CoreDao> coreDaoHashMap;
 
-    private OpenHelperInterface openHelper;
+    private IOpenHelper openHelper;
 
     private static final String CIPHER_HELPER_CLASS = "com.coredata.cipher.CipherOpenHelper";
 
@@ -48,7 +48,7 @@ public final class CoreDatabaseManager {
                 throw new IllegalStateException("if you want to use sqlite by password, you must dependencies coredata-cipher");
             }
             try {
-                openHelper = (OpenHelperInterface) aClass.getConstructor(
+                openHelper = (IOpenHelper) aClass.getConstructor(
                         Context.class, String.class, int.class, String.class, String.class)
                         .newInstance(context, name, version, password, instanceTag);
             } catch (Exception e) {

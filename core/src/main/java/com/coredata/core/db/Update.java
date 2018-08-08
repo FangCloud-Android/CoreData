@@ -2,13 +2,14 @@ package com.coredata.core.db;
 
 import com.coredata.core.BaseSet;
 import com.coredata.core.UpdateSet;
+import com.coredata.core.async.AsyncFuture;
 import com.coredata.utils.SqlUtils;
 
 /**
  * Created by wangjinpeng on 2017/7/1.
  */
 
-public class Update<T> {
+public class Update<T> implements IUpdateDelete<T> {
 
     private final UpdateSet<T> set;
 
@@ -27,11 +28,18 @@ public class Update<T> {
         return this;
     }
 
-    public UpdateDeleteWhere<UpdateDeleteSetInterface<T>, ? extends BaseSet<T>, T> where(String columnName) {
-        return set.where(columnName);
-    }
-
+    @Override
     public boolean execute() {
         return set.execute();
+    }
+
+    @Override
+    public AsyncFuture<Boolean> executeAsync() {
+        return set.executeAsync();
+    }
+
+    @Override
+    public UpdateDeleteWhere<IUpdateDelete<T>, ? extends BaseSet<T>, T> where(String columnName) {
+        return set.where(columnName);
     }
 }

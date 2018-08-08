@@ -4,6 +4,9 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 
+import com.coredata.core.async.AsyncCoreDao;
+import com.coredata.core.async.AsyncFuture;
+import com.coredata.core.async.AsyncThreadFactory;
 import com.coredata.core.db.CoreDatabase;
 import com.coredata.core.db.CoreStatement;
 import com.coredata.core.rx.QueryData;
@@ -16,6 +19,10 @@ import com.coredata.db.Property;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.Subject;
@@ -35,6 +42,12 @@ public abstract class CoreDao<T> {
 
     public static final Object lock = new Object();
     private CoreData cdInstance;
+
+    public static ExecutorService executor =
+            new ThreadPoolExecutor(0, 2,
+                    60L, TimeUnit.SECONDS,
+                    new SynchronousQueue<Runnable>(),
+                    new AsyncThreadFactory());
 
     /**
      * 数据库创建
@@ -84,6 +97,14 @@ public abstract class CoreDao<T> {
     protected abstract boolean replaceInternal(Collection<T> tCollection, CoreDatabase db);
 
     protected abstract List<T> bindCursor(Cursor cursor);
+
+    /**
+     * 返回一个可异步的dao，后续条件执行时都会在异步线程中处理
+     * @return
+     */
+    public AsyncCoreDao<T> async() {
+        return new AsyncCoreDao<>(this);
+    }
 
     /**
      * 单条数据插入 内部使用
@@ -346,6 +367,21 @@ public abstract class CoreDao<T> {
         } finally {
             sendTrigger(new QueryData(this));
         }
+    }
+
+    AsyncFuture<Boolean> updateDeleteAsyncInternal(final String sql) {
+        final AsyncFuture<Boolean> future = new AsyncFuture<>();
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                boolean b = updateDeleteInternal(sql);
+                AsyncFuture.Callback<Boolean> callback = future.getCallback();
+                if (callback != null) {
+                    callback.response(b);
+                }
+            }
+        });
+        return future;
     }
 
     /**

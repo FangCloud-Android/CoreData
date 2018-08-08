@@ -7,14 +7,14 @@ import android.database.sqlite.SQLiteOpenHelper;
 import com.coredata.core.CoreData;
 import com.coredata.core.CoreDatabaseManager;
 import com.coredata.core.db.CoreDatabase;
-import com.coredata.core.db.OpenHelperInterface;
+import com.coredata.core.db.IOpenHelper;
 
 /**
  * CoreData绑定Sqlite3的Helper
  *
  * @author wangjinpeng
  */
-public class NormalOpenHelper extends SQLiteOpenHelper implements OpenHelperInterface {
+public class NormalOpenHelper extends SQLiteOpenHelper implements IOpenHelper {
 
     private String instanceTag;
 
