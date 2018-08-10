@@ -1,4 +1,6 @@
-package com.coredata.core;
+package com.coredata.core.db;
+
+import com.coredata.core.CoreDao;
 
 /**
  * Created by wangjinpeng on 2017/6/27.
@@ -10,7 +12,7 @@ public class BaseSet<T> {
 
     private final StringBuilder sqlBuilder;
 
-    BaseSet(CoreDao<T> coreDao) {
+    public BaseSet(CoreDao<T> coreDao) {
         this.coreDao = coreDao;
         sqlBuilder = new StringBuilder();
     }

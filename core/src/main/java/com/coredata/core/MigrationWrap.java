@@ -25,7 +25,7 @@ import java.util.Set;
 /**
  * 此处做数据库的升级和降级处理
  */
-public final class MigrationWrap {
+final class MigrationWrap {
 
     private List<Migration> migrations;
     // 需要数据迁移的数据

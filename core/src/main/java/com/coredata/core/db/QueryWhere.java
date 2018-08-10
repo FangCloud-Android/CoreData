@@ -1,6 +1,6 @@
 package com.coredata.core.db;
 
-import com.coredata.core.ResultSet;
+import com.coredata.core.async.AsyncFuture;
 import com.coredata.core.result.QueryResult;
 import com.coredata.core.rx.ResultObservable;
 
@@ -10,26 +10,26 @@ import java.util.List;
  * Created by wangjinpeng on 2017/7/4.
  */
 
-public class QueryWhere<SET extends ResultSet<T>, T> extends Where<SET, T> implements QueryResult<T> {
+public class QueryWhere<SET extends QuerySet<T>, T> extends BaseWhere<SET, T> implements QueryResult<T> {
 
     public QueryWhere(SET set, String columnName) {
         super(set, columnName);
     }
 
 
-    public ResultSet<T> groupBy(String expression) {
+    public QuerySet<T> groupBy(String expression) {
         return set.groupBy(expression);
     }
 
-    public ResultSet<T> orderBy(String expression) {
+    public QuerySet<T> orderBy(String expression) {
         return set.orderBy(expression);
     }
 
-    public ResultSet<T> orderBy(String expression, Order order) {
+    public QuerySet<T> orderBy(String expression, Order order) {
         return set.orderBy(expression, order);
     }
 
-    public ResultSet<T> limit(int size) {
+    public QuerySet<T> limit(int size) {
         return set.limit(size);
     }
 
@@ -120,6 +120,11 @@ public class QueryWhere<SET extends ResultSet<T>, T> extends Where<SET, T> imple
     @Override
     public List<T> result() {
         return set.result();
+    }
+
+    @Override
+    public AsyncFuture<List<T>> resultAsync() {
+        return set.resultAsync();
     }
 
     @Override

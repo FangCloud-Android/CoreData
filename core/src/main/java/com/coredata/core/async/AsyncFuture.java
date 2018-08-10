@@ -1,7 +1,7 @@
 package com.coredata.core.async;
 
 /**
- *
+ * 同步未来结果
  */
 public final class AsyncFuture<T> {
 

@@ -1,39 +1,40 @@
-package com.coredata.core;
+package com.coredata.core.db;
 
-import com.coredata.core.db.Order;
-import com.coredata.core.db.QueryWhere;
+import com.coredata.core.CoreDao;
+import com.coredata.core.async.AsyncCall;
+import com.coredata.core.async.AsyncFuture;
 import com.coredata.core.result.QueryResult;
 import com.coredata.core.rx.ResultObservable;
 
 import java.util.List;
 
 /**
- * 结果集，在这里对结果进行筛选，排序等等操作
+ * 查询结果集，在这里对结果进行筛选，排序等等操作
  *
  * @param <T> 对应的实体类型
  */
-public class ResultSet<T> extends BaseSet<T> implements QueryResult<T> {
+public class QuerySet<T> extends BaseSet<T> implements QueryResult<T> {
 
-    ResultSet(CoreDao<T> coreDao) {
+    public QuerySet(CoreDao<T> coreDao) {
         super(coreDao);
         append("SELECT * FROM ").append(coreDao.getTableName());
     }
 
-    public QueryWhere<ResultSet<T>, T> where(String columnName) {
+    public QueryWhere<QuerySet<T>, T> where(String columnName) {
         return new QueryWhere<>(this, columnName);
     }
 
-    public ResultSet<T> groupBy(String expression) {
+    public QuerySet<T> groupBy(String expression) {
         append(" GROUP BY ")
                 .append(expression);
         return this;
     }
 
-    public ResultSet<T> orderBy(String expression) {
+    public QuerySet<T> orderBy(String expression) {
         return orderBy(expression, Order.DESC);
     }
 
-    public ResultSet<T> orderBy(String expression, Order order) {
+    public QuerySet<T> orderBy(String expression, Order order) {
         append(" ORDER BY ")
                 .append(expression)
                 .append(" ")
@@ -41,13 +42,13 @@ public class ResultSet<T> extends BaseSet<T> implements QueryResult<T> {
         return this;
     }
 
-    public ResultSet<T> limit(int size) {
+    public QuerySet<T> limit(int size) {
         append(" LIMIT ")
                 .append(String.valueOf(size));
         return this;
     }
 
-    public ResultSet<T> offset(int offset) {
+    public QuerySet<T> offset(int offset) {
         append(" OFFSET ")
                 .append(String.valueOf(offset));
         return this;
@@ -61,5 +62,15 @@ public class ResultSet<T> extends BaseSet<T> implements QueryResult<T> {
     @Override
     public List<T> result() {
         return getCoreDao().querySqlInternal(getSql());
+    }
+
+    @Override
+    public AsyncFuture<List<T>> resultAsync() {
+        return getCoreDao().callAsyncInternal(new AsyncCall<List<T>>() {
+            @Override
+            public List<T> call() {
+                return result();
+            }
+        });
     }
 }

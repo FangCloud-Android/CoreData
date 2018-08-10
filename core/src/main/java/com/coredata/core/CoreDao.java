@@ -4,11 +4,15 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 
-import com.coredata.core.async.AsyncCoreDao;
+import com.coredata.core.async.AsyncCall;
 import com.coredata.core.async.AsyncFuture;
 import com.coredata.core.async.AsyncThreadFactory;
 import com.coredata.core.db.CoreDatabase;
 import com.coredata.core.db.CoreStatement;
+import com.coredata.core.db.DeleteSet;
+import com.coredata.core.db.FuncSet;
+import com.coredata.core.db.QuerySet;
+import com.coredata.core.db.UpdateSet;
 import com.coredata.core.rx.QueryData;
 import com.coredata.core.rx.ResultObservable;
 import com.coredata.core.rx.ResultQuery;
@@ -83,6 +87,11 @@ public abstract class CoreDao<T> {
      */
     public abstract List<Property> getTableProperties();
 
+    /**
+     * 获取创建表的sql
+     *
+     * @return
+     */
     protected abstract String getCreateTableSql();
 
     /**
@@ -92,19 +101,30 @@ public abstract class CoreDao<T> {
      */
     protected abstract String getInsertSql();
 
+    /**
+     * 绑定数据到statement
+     *
+     * @param statement
+     * @param t
+     */
     protected abstract void bindStatement(CoreStatement statement, T t);
 
-    protected abstract boolean replaceInternal(Collection<T> tCollection, CoreDatabase db);
-
-    protected abstract List<T> bindCursor(Cursor cursor);
-
     /**
-     * 返回一个可异步的dao，后续条件执行时都会在异步线程中处理
+     * 内部替换
+     *
+     * @param tCollection
+     * @param db
      * @return
      */
-    public AsyncCoreDao<T> async() {
-        return new AsyncCoreDao<>(this);
-    }
+    protected abstract boolean replaceInternal(Collection<T> tCollection, CoreDatabase db);
+
+    /**
+     * 游标绑定
+     *
+     * @param cursor
+     * @return
+     */
+    protected abstract List<T> bindCursor(Cursor cursor);
 
     /**
      * 单条数据插入 内部使用
@@ -121,7 +141,7 @@ public abstract class CoreDao<T> {
     }
 
     /**
-     * 插入集合数据, 内部使用
+     * 内部方法
      *
      * @param tCollection 实体集合
      * @param cdb         SQLiteDatabase对象
@@ -174,6 +194,21 @@ public abstract class CoreDao<T> {
     }
 
     /**
+     * 异步单条数据插入
+     *
+     * @param t 实体对象
+     * @return 同步结果回调
+     */
+    public AsyncFuture<Boolean> replaceAsync(final T t) {
+        return callAsyncInternal(new AsyncCall<Boolean>() {
+            @Override
+            public Boolean call() {
+                return replace(t);
+            }
+        });
+    }
+
+    /**
      * 插入集合数据
      *
      * @param tCollection 实体集合
@@ -195,12 +230,41 @@ public abstract class CoreDao<T> {
     }
 
     /**
+     * 异步插入一组数据
+     *
+     * @param tCollection
+     * @return
+     */
+    public AsyncFuture<Boolean> replaceAsync(final Collection<T> tCollection) {
+        return callAsyncInternal(new AsyncCall<Boolean>() {
+            @Override
+            public Boolean call() {
+                return replace(tCollection);
+            }
+        });
+    }
+
+    /**
      * 查询所有数据
      *
      * @return 实体对象List
      */
     public List<T> queryAll() {
         return query().result();
+    }
+
+    /**
+     * 异步查询所有数据
+     *
+     * @return
+     */
+    public AsyncFuture<List<T>> queryAllAsync() {
+        return callAsyncInternal(new AsyncCall<List<T>>() {
+            @Override
+            public List<T> call() {
+                return queryAll();
+            }
+        });
     }
 
     /**
@@ -220,6 +284,21 @@ public abstract class CoreDao<T> {
     }
 
     /**
+     * 异步查询主键为key的数据
+     *
+     * @param key
+     * @return
+     */
+    public AsyncFuture<T> queryByKeyAsync(final Object key) {
+        return callAsyncInternal(new AsyncCall<T>() {
+            @Override
+            public T call() {
+                return queryByKey(key);
+            }
+        });
+    }
+
+    /**
      * 根据给定的主键列表查询数据
      *
      * @param keys 主键values
@@ -235,12 +314,27 @@ public abstract class CoreDao<T> {
     }
 
     /**
+     * 异步查询相关主键keys的数据
+     *
+     * @param keys
+     * @return
+     */
+    public AsyncFuture<List<T>> queryByKeysAsync(final Object[] keys) {
+        return callAsyncInternal(new AsyncCall<List<T>>() {
+            @Override
+            public List<T> call() {
+                return queryByKeys(keys);
+            }
+        });
+    }
+
+    /**
      * 查询，生成一个查询用的结构处理集
      *
      * @return 创建一个结果处理集合
      */
-    public ResultSet<T> query() {
-        return new ResultSet<>(this);
+    public QuerySet<T> query() {
+        return new QuerySet<>(this);
     }
 
     /**
@@ -273,6 +367,20 @@ public abstract class CoreDao<T> {
     }
 
     /**
+     * 异步删除所有数据
+     *
+     * @return
+     */
+    public AsyncFuture<Boolean> deleteAllAsync() {
+        return callAsyncInternal(new AsyncCall<Boolean>() {
+            @Override
+            public Boolean call() {
+                return deleteAll();
+            }
+        });
+    }
+
+    /**
      * 根据给定主键删除
      *
      * @param key 主键value
@@ -282,6 +390,15 @@ public abstract class CoreDao<T> {
         return delete()
                 .where(getPrimaryKeyName()).eq(key)
                 .execute();
+    }
+
+    public AsyncFuture<Boolean> deleteByKeyAsync(final Object key) {
+        return callAsyncInternal(new AsyncCall<Boolean>() {
+            @Override
+            public Boolean call() {
+                return deleteByKey(key);
+            }
+        });
     }
 
     /**
@@ -297,6 +414,15 @@ public abstract class CoreDao<T> {
         return delete()
                 .where(getPrimaryKeyName()).in(keys)
                 .execute();
+    }
+
+    public AsyncFuture<Boolean> deleteByKeysAsync(final Object[] keys) {
+        return callAsyncInternal(new AsyncCall<Boolean>() {
+            @Override
+            public Boolean call() {
+                return deleteByKeys(keys);
+            }
+        });
     }
 
     /**
@@ -327,12 +453,14 @@ public abstract class CoreDao<T> {
     }
 
     /**
+     * 内部方法
+     * <p>
      * 根据给定的条件进行查询
      *
      * @param sql sql语句
      * @return 实体对象List
      */
-    List<T> querySqlInternal(String sql) {
+    public List<T> querySqlInternal(String sql) {
         synchronized (lock) {
             Debugger.d("CoreDao--querySqlInternal--sql:" + sql);
             CoreDatabase cdb;
@@ -356,7 +484,7 @@ public abstract class CoreDao<T> {
      * @param sql
      * @return 是否删除成功
      */
-    boolean updateDeleteInternal(String sql) {
+    public boolean updateDeleteInternal(String sql) {
         try {
             synchronized (lock) {
                 Debugger.d("CoreDao--updateDeleteInternal--sql:" + sql);
@@ -369,15 +497,22 @@ public abstract class CoreDao<T> {
         }
     }
 
-    AsyncFuture<Boolean> updateDeleteAsyncInternal(final String sql) {
-        final AsyncFuture<Boolean> future = new AsyncFuture<>();
+    /**
+     * 内部方法
+     *
+     * @param asyncCall
+     * @param <T>
+     * @return
+     */
+    public <T> AsyncFuture<T> callAsyncInternal(final AsyncCall<T> asyncCall) {
+        final AsyncFuture<T> future = new AsyncFuture<>();
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                boolean b = updateDeleteInternal(sql);
-                AsyncFuture.Callback<Boolean> callback = future.getCallback();
+                T call = asyncCall.call();
+                AsyncFuture.Callback<T> callback = future.getCallback();
                 if (callback != null) {
-                    callback.response(b);
+                    callback.response(call);
                 }
             }
         });
@@ -385,12 +520,12 @@ public abstract class CoreDao<T> {
     }
 
     /**
-     * 给定sql查询结果并转换为ContentValues
+     * 内部方法
      *
      * @param sql
      * @return
      */
-    List<ContentValues> queryContentValuesInternal(String sql) {
+    public List<ContentValues> queryContentValuesInternal(String sql) {
         List<ContentValues> contentValuesList = new ArrayList<>();
         Cursor cursor = null;
         try {
@@ -408,8 +543,8 @@ public abstract class CoreDao<T> {
         return contentValuesList;
     }
 
-    ResultObservable<T> observable(ResultSet<T> resultSet) {
-        final ResultQuery<T> resultQuery = new ResultQuery<>(this, resultSet);
+    public ResultObservable<T> observable(QuerySet<T> querySet) {
+        final ResultQuery<T> resultQuery = new ResultQuery<>(this, querySet);
         final Subject<QueryData> triggers = getCoreData().getTriggers();
         return triggers
                 .observeOn(Schedulers.io())
@@ -418,7 +553,7 @@ public abstract class CoreDao<T> {
                 // 映射为ResultSet
                 .map(resultQuery.getMapResult())
                 // 在注册一开始就发射一组数据
-                .startWith(resultSet)
+                .startWith(querySet)
                 // 做数据映射
                 .map(resultQuery.getMapList())
                 // Observable 转换

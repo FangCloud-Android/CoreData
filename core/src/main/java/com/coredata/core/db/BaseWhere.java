@@ -1,25 +1,24 @@
 package com.coredata.core.db;
 
-import com.coredata.core.BaseSet;
 import com.coredata.utils.SqlUtils;
 
-abstract class Where<SET extends BaseSet<T>, T> {
+abstract class BaseWhere<SET extends BaseSet<T>, T> {
 
     protected final SET set;
 
-    public Where(SET set, String columnName) {
+    public BaseWhere(SET set, String columnName) {
         this.set = set;
         set.append(" WHERE ")
                 .append(columnName);
     }
 
-    public Where<SET, T> and(String columnName) {
+    public BaseWhere<SET, T> and(String columnName) {
         set.append(" AND ");
         set.append(SqlUtils.formatColumnName(columnName));
         return this;
     }
 
-    public Where<SET, T> or(String columnName) {
+    public BaseWhere<SET, T> or(String columnName) {
         set.append(" OR ");
         set.append(SqlUtils.formatColumnName(columnName));
         return this;
@@ -31,7 +30,7 @@ abstract class Where<SET extends BaseSet<T>, T> {
      * @param o
      * @return
      */
-    public Where<SET, T> eq(Object o) {
+    public BaseWhere<SET, T> eq(Object o) {
         set.append(" = ")
                 .append(SqlUtils.formatValue(o));
         return this;
@@ -43,13 +42,13 @@ abstract class Where<SET extends BaseSet<T>, T> {
      * @param o
      * @return
      */
-    public Where<SET, T> noteq(Object o) {
+    public BaseWhere<SET, T> noteq(Object o) {
         set.append(" <> ")
                 .append(SqlUtils.formatValue(o));
         return this;
     }
 
-    public Where<SET, T> in(Object[] values) {
+    public BaseWhere<SET, T> in(Object[] values) {
         StringBuilder append = new StringBuilder();
         boolean isFirst = true;
         for (Object val : values) {
@@ -66,7 +65,7 @@ abstract class Where<SET extends BaseSet<T>, T> {
         return this;
     }
 
-    public Where<SET, T> notIn(Object[] values) {
+    public BaseWhere<SET, T> notIn(Object[] values) {
         StringBuilder append = new StringBuilder();
         boolean isFirst = true;
         for (Object val : values) {
@@ -88,7 +87,7 @@ abstract class Where<SET extends BaseSet<T>, T> {
      *
      * @return
      */
-    public Where<SET, T> isNull() {
+    public BaseWhere<SET, T> isNull() {
         set.append(" IS NULL");
         return this;
     }
@@ -98,7 +97,7 @@ abstract class Where<SET extends BaseSet<T>, T> {
      *
      * @return
      */
-    public Where<SET, T> isNotNull() {
+    public BaseWhere<SET, T> isNotNull() {
         set.append(" IS NOT NULL");
         return this;
     }
@@ -110,7 +109,7 @@ abstract class Where<SET extends BaseSet<T>, T> {
      * @param rv
      * @return
      */
-    public Where<SET, T> between(Object lv, Object rv) {
+    public BaseWhere<SET, T> between(Object lv, Object rv) {
         set.append(String.format(
                 " BETWEEN %1$s AND %2$S",
                 SqlUtils.formatValue(lv),
@@ -124,7 +123,7 @@ abstract class Where<SET extends BaseSet<T>, T> {
      * @param value
      * @return
      */
-    public Where<SET, T> gt(Object value) {
+    public BaseWhere<SET, T> gt(Object value) {
         set.append(" > ").append(SqlUtils.formatValue(value));
         return this;
     }
@@ -135,7 +134,7 @@ abstract class Where<SET extends BaseSet<T>, T> {
      * @param value
      * @return
      */
-    public Where<SET, T> gte(Object value) {
+    public BaseWhere<SET, T> gte(Object value) {
         set.append(" >= ").append(SqlUtils.formatValue(value));
         return this;
     }
@@ -146,7 +145,7 @@ abstract class Where<SET extends BaseSet<T>, T> {
      * @param value
      * @return
      */
-    public Where<SET, T> lt(Object value) {
+    public BaseWhere<SET, T> lt(Object value) {
         set.append(" < ").append(SqlUtils.formatValue(value));
         return this;
     }
@@ -157,7 +156,7 @@ abstract class Where<SET extends BaseSet<T>, T> {
      * @param value
      * @return
      */
-    public Where<SET, T> lte(Object value) {
+    public BaseWhere<SET, T> lte(Object value) {
         set.append(" <= ").append(SqlUtils.formatValue(value));
         return this;
     }
@@ -168,7 +167,7 @@ abstract class Where<SET extends BaseSet<T>, T> {
      * @param expression
      * @return
      */
-    public Where<SET, T> like(String expression) {
+    public BaseWhere<SET, T> like(String expression) {
         set.append(String.format(" LIKE '%s'", expression));
         return this;
     }

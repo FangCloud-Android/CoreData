@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 Log.d("wanpg", "开始插入");
                 long start = System.currentTimeMillis();
-                CoreData.defaultInstance().dao(Book.class).replace(books);
+                CoreData.defaultInstance().dao(Book.class).update();
                 Log.d("wanpg", "10000条用时" + (System.currentTimeMillis() - start));
             }
         }.start();

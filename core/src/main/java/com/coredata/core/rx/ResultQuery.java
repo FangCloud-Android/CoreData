@@ -1,7 +1,7 @@
 package com.coredata.core.rx;
 
 import com.coredata.core.CoreDao;
-import com.coredata.core.ResultSet;
+import com.coredata.core.db.QuerySet;
 
 import java.util.List;
 
@@ -10,19 +10,19 @@ import io.reactivex.functions.Predicate;
 
 public class ResultQuery<T> {
     private final CoreDao<T> coreDao;
-    private final ResultSet<T> resultSet;
+    private final QuerySet<T> querySet;
 
-    private final Function<QueryData, ResultSet<T>> mapResult = new Function<QueryData, ResultSet<T>>() {
+    private final Function<QueryData, QuerySet<T>> mapResult = new Function<QueryData, QuerySet<T>>() {
         @Override
-        public ResultSet<T> apply(QueryData data) {
-            return resultSet;
+        public QuerySet<T> apply(QueryData data) {
+            return querySet;
         }
     };
 
-    private final Function<ResultSet<T>, List<T>> mapList = new Function<ResultSet<T>, List<T>>() {
+    private final Function<QuerySet<T>, List<T>> mapList = new Function<QuerySet<T>, List<T>>() {
         @Override
-        public List<T> apply(ResultSet<T> resultSet) {
-            return resultSet.result();
+        public List<T> apply(QuerySet<T> querySet) {
+            return querySet.result();
         }
     };
 
@@ -33,20 +33,20 @@ public class ResultQuery<T> {
         }
     };
 
-    public ResultQuery(CoreDao<T> coreDao, ResultSet<T> resultSet) {
+    public ResultQuery(CoreDao<T> coreDao, QuerySet<T> querySet) {
         this.coreDao = coreDao;
-        this.resultSet = resultSet;
+        this.querySet = querySet;
     }
 
     public Predicate<QueryData> getPredicateQuery() {
         return predicateQuery;
     }
 
-    public Function<QueryData, ResultSet<T>> getMapResult() {
+    public Function<QueryData, QuerySet<T>> getMapResult() {
         return mapResult;
     }
 
-    public Function<ResultSet<T>, List<T>> getMapList() {
+    public Function<QuerySet<T>, List<T>> getMapList() {
         return mapList;
     }
 }

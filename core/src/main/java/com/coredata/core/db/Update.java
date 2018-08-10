@@ -1,7 +1,5 @@
 package com.coredata.core.db;
 
-import com.coredata.core.BaseSet;
-import com.coredata.core.UpdateSet;
 import com.coredata.core.async.AsyncFuture;
 import com.coredata.utils.SqlUtils;
 
@@ -39,7 +37,7 @@ public class Update<T> implements IUpdateDelete<T> {
     }
 
     @Override
-    public UpdateDeleteWhere<IUpdateDelete<T>, ? extends BaseSet<T>, T> where(String columnName) {
+    public UpdateWhere<IUpdateDelete<T>, ? extends BaseSet<T>, T> where(String columnName) {
         return set.where(columnName);
     }
 }

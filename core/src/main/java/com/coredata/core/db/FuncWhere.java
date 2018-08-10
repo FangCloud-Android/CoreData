@@ -2,10 +2,10 @@ package com.coredata.core.db;
 
 import android.content.ContentValues;
 
-import com.coredata.core.FuncSet;
+import com.coredata.core.async.AsyncFuture;
 import com.coredata.core.result.Result;
 
-public class FuncWhere<SET extends FuncSet<T>, T> extends Where<SET, T> implements Result<ContentValues> {
+public class FuncWhere<SET extends FuncSet<T>, T> extends BaseWhere<SET, T> implements Result<ContentValues> {
 
     public FuncWhere(SET set, String columnName) {
         super(set, columnName);
@@ -19,6 +19,11 @@ public class FuncWhere<SET extends FuncSet<T>, T> extends Where<SET, T> implemen
     @Override
     public ContentValues result() {
         return set.result();
+    }
+
+    @Override
+    public AsyncFuture<ContentValues> resultAsync() {
+        return set.resultAsync();
     }
 
     @Override

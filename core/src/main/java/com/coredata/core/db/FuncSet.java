@@ -1,8 +1,10 @@
-package com.coredata.core;
+package com.coredata.core.db;
 
 import android.content.ContentValues;
 
-import com.coredata.core.db.FuncWhere;
+import com.coredata.core.CoreDao;
+import com.coredata.core.async.AsyncCall;
+import com.coredata.core.async.AsyncFuture;
 import com.coredata.core.result.Result;
 import com.coredata.utils.SqlUtils;
 
@@ -18,7 +20,7 @@ public class FuncSet<T> extends BaseSet<T> implements Result<ContentValues> {
     private boolean funcAdded = false;
     private boolean hasWhere = false;
 
-    FuncSet(CoreDao<T> coreDao) {
+    public FuncSet(CoreDao<T> coreDao) {
         super(coreDao);
         append("SELECT");
     }
@@ -105,6 +107,16 @@ public class FuncSet<T> extends BaseSet<T> implements Result<ContentValues> {
             return contentValuesList.get(0);
         }
         return new ContentValues();
+    }
+
+    @Override
+    public AsyncFuture<ContentValues> resultAsync() {
+        return getCoreDao().callAsyncInternal(new AsyncCall<ContentValues>() {
+            @Override
+            public ContentValues call() {
+                return result();
+            }
+        });
     }
 }
 
