@@ -1,6 +1,7 @@
 # CoreData
 关系型数据库
 
+
 ##### 愿景
 
 从名字可以看出，取名自IOS的CoreData数据库。希望能够支持Relation，并能在保证速度不会差距很大的情况下方便简单的使用。
@@ -17,22 +18,22 @@ demo         --- 样例代码
 
 ##### 接入说明
 
-1. 使用`gradle`的形式进行接入，找到需要引入CoreData工程的`build.gradle`，在`dependencies`内添加如下代码
+1. 使用`gradle`的形式进行接入，`x.x.x`用 [![](https://jitpack.io/v/fangcloud-android/coredata.svg)](https://jitpack.io/#fangcloud-android/coredata)代替。找到需要引入CoreData工程的`build.gradle`，在`dependencies`内添加如下代码
 
    > 接入代码生成工具
 
    ```groovy
-   annotationProcessor 'com.github.fangcloud-android.coreData:compiler:0.1.1-SNAPSHOT'
+   annotationProcessor 'com.github.fangcloud-android.coreData:compiler:x.x.x'
    ```
    > 接入非加密版的库
 
    ```groovy
-   compile 'com.github.fangcloud-android.coredata:core:0.1.1-SNAPSHOT'
+   compile 'com.github.fangcloud-android.coredata:core:x.x.x'
    ```
    > 接入加密版的库
 
    ```groovy
-   compile 'com.github.fangcloud-android.coredata:cipher:0.1.1-SNAPSHOT' // 只需引用此库即可
+   compile 'com.github.fangcloud-android.coredata:cipher:x.x.x' // 只需引用此库即可
    ```
 
 2. 代码接入
@@ -54,7 +55,7 @@ demo         --- 样例代码
     ```java
    @Entity(tableName = "book")
    public class Book {
-
+   
        @PrimaryKey
        public long id
        
@@ -62,14 +63,14 @@ demo         --- 样例代码
        
        @Convert(converter = SerializableListConverter.class, dbType = String.class)
        public List<Tag> tags;
-
+   
        @Relation
        @ColumnInfo(name = "author_id")
        public Author author;
-
+   
        @Embedded
        public Desc desc;
-
+   
        @Ignore
        public Bitmap icon;
    }
@@ -120,7 +121,7 @@ demo         --- 样例代码
    -keep class * extends com.coredata.core.CoreDao
    -keep class com.coredata.annotation.Entity
    -keepnames @com.coredata.annotation.Entity class *
-
+   
    # 如果使用到加密库，请将下面的代码也做配置
    -keepclasseswithmembers class com.coredata.cipher.CipherOpenHelper {
        public <init>(...);
@@ -150,7 +151,7 @@ demo         --- 样例代码
               }
           });
    }
-
+   
    public void unRegister(View view) {
       if (disposable != null) {
           disposable.dispose();
