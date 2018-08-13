@@ -44,7 +44,6 @@ public abstract class CoreDao<T> {
     public static final String RESULT_AVG = "result_avg";
     public static final String RESULT_SUM = "result_sum";
 
-    public static final Object lock = new Object();
     private CoreData cdInstance;
 
     public static ExecutorService executor =
@@ -180,13 +179,11 @@ public abstract class CoreDao<T> {
             return false;
         }
         try {
-            synchronized (lock) {
-                CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
-                cdb.beginTransaction();
-                replace(t, cdb);
-                cdb.setTransactionSuccessful();
-                cdb.endTransaction();
-            }
+            CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
+            cdb.beginTransaction();
+            replace(t, cdb);
+            cdb.setTransactionSuccessful();
+            cdb.endTransaction();
             return true;
         } finally {
             sendTrigger(new QueryData(this));
@@ -216,13 +213,11 @@ public abstract class CoreDao<T> {
      */
     public boolean replace(Collection<T> tCollection) {
         try {
-            synchronized (lock) {
-                CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
-                cdb.beginTransaction();
-                replace(tCollection, cdb);
-                cdb.setTransactionSuccessful();
-                cdb.endTransaction();
-            }
+            CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
+            cdb.beginTransaction();
+            replace(tCollection, cdb);
+            cdb.setTransactionSuccessful();
+            cdb.endTransaction();
             return true;
         } finally {
             sendTrigger(new QueryData(this));
@@ -344,17 +339,15 @@ public abstract class CoreDao<T> {
      * @return 实体对象List
      */
     public Cursor querySqlCursor(String sql) {
-        synchronized (lock) {
-            Debugger.d("CoreDao--querySqlCursor--sql:" + sql);
-            CoreDatabase cdb;
-            try {
-                cdb = cdInstance.getCoreDataBase().getReadableDatabase();
-                return cdb.rawQuery(sql, null);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
+        Debugger.d("CoreDao--querySqlCursor--sql:" + sql);
+        CoreDatabase cdb;
+        try {
+            cdb = cdInstance.getCoreDataBase().getReadableDatabase();
+            return cdb.rawQuery(sql, null);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return null;
     }
 
     /**
@@ -461,21 +454,18 @@ public abstract class CoreDao<T> {
      * @return 实体对象List
      */
     public List<T> querySqlInternal(String sql) {
-        synchronized (lock) {
-            Debugger.d("CoreDao--querySqlInternal--sql:" + sql);
-            CoreDatabase cdb;
-            Cursor cursor = null;
-            try {
-                cdb = cdInstance.getCoreDataBase().getReadableDatabase();
-                cursor = cdb.rawQuery(sql, null);
-                return bindCursor(cursor);
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                DBUtils.closeCursor(cursor);
-            }
-            return new ArrayList<>();
+        Debugger.d("CoreDao--querySqlInternal--sql:" + sql);
+        Cursor cursor = null;
+        try {
+            CoreDatabase cdb = cdInstance.getCoreDataBase().getReadableDatabase();
+            cursor = cdb.rawQuery(sql, null);
+            return bindCursor(cursor);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBUtils.closeCursor(cursor);
         }
+        return new ArrayList<>();
     }
 
     /**
@@ -486,12 +476,10 @@ public abstract class CoreDao<T> {
      */
     public boolean updateDeleteInternal(String sql) {
         try {
-            synchronized (lock) {
-                Debugger.d("CoreDao--updateDeleteInternal--sql:" + sql);
-                CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
-                CoreStatement cs = cdb.compileStatement(sql);
-                return cs.executeUpdateDelete() > 0;
-            }
+            Debugger.d("CoreDao--updateDeleteInternal--sql:" + sql);
+            CoreDatabase cdb = cdInstance.getCoreDataBase().getWritableDatabase();
+            CoreStatement cs = cdb.compileStatement(sql);
+            return cs.executeUpdateDelete() > 0;
         } finally {
             sendTrigger(new QueryData(this));
         }

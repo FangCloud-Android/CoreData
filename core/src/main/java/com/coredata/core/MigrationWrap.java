@@ -52,7 +52,7 @@ final class MigrationWrap {
      * @param oldVersion 老版本
      * @param newVersion 新版本
      */
-    void onUpgrade(CoreDatabase cdb, int oldVersion, int newVersion) {
+    synchronized void onUpgrade(CoreDatabase cdb, int oldVersion, int newVersion) {
         // 此处做自定义的数据迁移
         onDataMigrateStart(cdb, oldVersion, newVersion);
         // 先取出老的表结构，要在onDataMigrateStart后执行，因为自定义migration可能会删除部分表
@@ -81,7 +81,7 @@ final class MigrationWrap {
      * @param oldVersion 老版本
      * @param newVersion 新版本
      */
-    void onDowngrade(CoreDatabase cdb, int oldVersion, int newVersion) {
+    synchronized void onDowngrade(CoreDatabase cdb, int oldVersion, int newVersion) {
         // 目前降级操作时删除所有表，并重新创建
         // 先取出老的表结构
         List<String> originTableList = DBUtils.tableList(cdb);
@@ -228,99 +228,97 @@ final class MigrationWrap {
      * @param newVersion
      */
     private void onDataBaseUpgradeAuto(CoreDatabase db, CoreDao coreDao, int oldVersion, int newVersion, DataSet dataSet) {
-        synchronized (CoreDao.lock) {
-            // 查出old表结构
-            List<DbProperty> oldDbProperties = null;
-            // 如果dataSet存在，则说明开启了手动变更数据，不再执行自动升级，直接清空数据，并创建新表
-            if (dataSet == null) {
-                oldDbProperties = pragmaTableInfo(db, coreDao.getTableName());
+        // 查出old表结构
+        List<DbProperty> oldDbProperties = null;
+        // 如果dataSet存在，则说明开启了手动变更数据，不再执行自动升级，直接清空数据，并创建新表
+        if (dataSet == null) {
+            oldDbProperties = pragmaTableInfo(db, coreDao.getTableName());
+        }
+        if (oldDbProperties == null || oldDbProperties.isEmpty()) {
+            // 如果不存在表结构，则尝试删除旧表并重新创建
+            db.execSQL(SqlUtils.getDropTableSql(coreDao.getTableName()));
+            db.execSQL(coreDao.getCreateTableSql());
+        } else {
+            // 如果存在则判断old表结构与new表结构是否一致
+            // 解析原始表创建语句，分析字段对应类型及主键，索引等参数是否一致，并进行修改
+
+            // 匹配相交的数据
+            @SuppressWarnings("unchecked")
+            List<Property> newTableProperties = coreDao.getTableProperties();
+            // 转换Property为DbProperty
+            List<DbProperty> newDbProperties = new ArrayList<>();
+            for (Property property : newTableProperties) {
+                newDbProperties.add(
+                        new DbProperty(property.name,
+                                SqlUtils.getSqlTypeByClazz(property.type),
+                                property.primaryKey));
             }
-            if (oldDbProperties == null || oldDbProperties.isEmpty()) {
-                // 如果不存在表结构，则尝试删除旧表并重新创建
-                db.execSQL(SqlUtils.getDropTableSql(coreDao.getTableName()));
+
+            // 以新表为基准求交集，如果新表是旧表的子集，并且size相等，说明不需要迁移表，不需要做任何处理
+            // 如果求交集数据有变化，或者新旧表列数不相等，则需要迁移
+            // newDbProperties.retainAll(oldDbProperties)
+            // -- true -- 说明新增了字段，new表中某个字段old表中没有
+            // -- false -- 说明字段未变更 或者 删除了字段，新表所有字段都存在与老表
+            // false时，再判断一次new表size 是否与old表size相同，相同则说明数据不变更，不相同则说明是删除了字段
+            if (newDbProperties.retainAll(oldDbProperties)
+                    || newTableProperties.size() != oldDbProperties.size()) {
+                // old表改名为temp表
+                String tempTableName = coreDao.getTableName() + "_" + oldVersion;
+                boolean needMoveData = true;
+                try {
+                    db.execSQL(String.format("ALTER TABLE %s RENAME TO %s", coreDao.getTableName(), tempTableName));
+                } catch (SQLException e) {
+                    // 修改表结构失败
+                    db.execSQL(SqlUtils.getDropTableSql(coreDao.getTableName()));
+                    needMoveData = false;
+                }
+
+                // 创建新的表
                 db.execSQL(coreDao.getCreateTableSql());
-            } else {
-                // 如果存在则判断old表结构与new表结构是否一致
-                // 解析原始表创建语句，分析字段对应类型及主键，索引等参数是否一致，并进行修改
 
-                // 匹配相交的数据
-                @SuppressWarnings("unchecked")
-                List<Property> newTableProperties = coreDao.getTableProperties();
-                // 转换Property为DbProperty
-                List<DbProperty> newDbProperties = new ArrayList<>();
-                for (Property property : newTableProperties) {
-                    newDbProperties.add(
-                            new DbProperty(property.name,
-                                    SqlUtils.getSqlTypeByClazz(property.type),
-                                    property.primaryKey));
-                }
-
-                // 以新表为基准求交集，如果新表是旧表的子集，并且size相等，说明不需要迁移表，不需要做任何处理
-                // 如果求交集数据有变化，或者新旧表列数不相等，则需要迁移
-                // newDbProperties.retainAll(oldDbProperties)
-                // -- true -- 说明新增了字段，new表中某个字段old表中没有
-                // -- false -- 说明字段未变更 或者 删除了字段，新表所有字段都存在与老表
-                // false时，再判断一次new表size 是否与old表size相同，相同则说明数据不变更，不相同则说明是删除了字段
-                if (newDbProperties.retainAll(oldDbProperties)
-                        || newTableProperties.size() != oldDbProperties.size()) {
-                    // old表改名为temp表
-                    String tempTableName = coreDao.getTableName() + "_" + oldVersion;
-                    boolean needMoveData = true;
+                // 交集不为空则进行数据迁移
+                if (needMoveData && !newDbProperties.isEmpty()) {
                     try {
-                        db.execSQL(String.format("ALTER TABLE %s RENAME TO %s", coreDao.getTableName(), tempTableName));
-                    } catch (SQLException e) {
-                        // 修改表结构失败
-                        db.execSQL(SqlUtils.getDropTableSql(coreDao.getTableName()));
-                        needMoveData = false;
-                    }
-
-                    // 创建新的表
-                    db.execSQL(coreDao.getCreateTableSql());
-
-                    // 交集不为空则进行数据迁移
-                    if (needMoveData && !newDbProperties.isEmpty()) {
-                        try {
-                            // 判断交集中是否有主键
-                            boolean isJoinPrimaryKey = false;
-                            for (DbProperty dbProperty : newDbProperties) {
-                                if (dbProperty.primaryKey) {
-                                    isJoinPrimaryKey = true;
-                                    break;
-                                }
+                        // 判断交集中是否有主键
+                        boolean isJoinPrimaryKey = false;
+                        for (DbProperty dbProperty : newDbProperties) {
+                            if (dbProperty.primaryKey) {
+                                isJoinPrimaryKey = true;
+                                break;
                             }
-
-                            // 如果交集中有主键，则需要数据迁移
-                            // 如果主键不一致，说明主键变更，数据没有迁移的必要
-                            if (isJoinPrimaryKey) {
-                                // 从老表中取出所有交集的数据
-                                StringBuilder sqlBuilder = new StringBuilder("SELECT ");
-                                boolean isFirst = true;
-                                for (DbProperty dbProperty : newDbProperties) {
-                                    if (!isFirst) {
-                                        sqlBuilder.append(", ");
-                                    }
-                                    isFirst = false;
-                                    sqlBuilder.append(dbProperty.name);
-                                }
-                                sqlBuilder.append(" FROM ").append(tempTableName);
-                                List<ContentValues> contentValuesList = DBUtils.queryBySql(db, sqlBuilder.toString());
-                                // 插入新表
-                                if (!contentValuesList.isEmpty()) {
-                                    db.beginTransaction();
-                                    for (ContentValues cv : contentValuesList) {
-                                        db.replace(coreDao.getTableName(), null, cv);
-                                    }
-                                    db.setTransactionSuccessful();
-                                    db.endTransaction();
-                                }
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
                         }
+
+                        // 如果交集中有主键，则需要数据迁移
+                        // 如果主键不一致，说明主键变更，数据没有迁移的必要
+                        if (isJoinPrimaryKey) {
+                            // 从老表中取出所有交集的数据
+                            StringBuilder sqlBuilder = new StringBuilder("SELECT ");
+                            boolean isFirst = true;
+                            for (DbProperty dbProperty : newDbProperties) {
+                                if (!isFirst) {
+                                    sqlBuilder.append(", ");
+                                }
+                                isFirst = false;
+                                sqlBuilder.append(dbProperty.name);
+                            }
+                            sqlBuilder.append(" FROM ").append(tempTableName);
+                            List<ContentValues> contentValuesList = DBUtils.queryBySql(db, sqlBuilder.toString());
+                            // 插入新表
+                            if (!contentValuesList.isEmpty()) {
+                                db.beginTransaction();
+                                for (ContentValues cv : contentValuesList) {
+                                    db.replace(coreDao.getTableName(), null, cv);
+                                }
+                                db.setTransactionSuccessful();
+                                db.endTransaction();
+                            }
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                    // 删除旧表
-                    db.execSQL(SqlUtils.getDropTableSql(tempTableName));
                 }
+                // 删除旧表
+                db.execSQL(SqlUtils.getDropTableSql(tempTableName));
             }
         }
     }

@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 Log.d("wanpg", "开始插入");
                 long start = System.currentTimeMillis();
-                CoreData.defaultInstance().dao(Book.class).update();
+                CoreData.defaultInstance().dao(Book.class).replace(books);
                 Log.d("wanpg", "10000条用时" + (System.currentTimeMillis() - start));
             }
         }.start();
@@ -100,11 +100,11 @@ public class MainActivity extends AppCompatActivity {
                 Log.d("wanpg", "开始读取");
                 long start = System.currentTimeMillis();
                 List<Book> books1 = CoreData.defaultInstance().dao(Book.class).queryAll();
-                Log.d("wanpg", "读取10000条书用时" + (System.currentTimeMillis() - start));
+                Log.d("wanpg", "读取" + books1.size() + "条书用时" + (System.currentTimeMillis() - start));
                 Log.d("wanpg", "开始读取");
                 long start1 = System.currentTimeMillis();
                 List<Author> all = CoreData.defaultInstance().dao(Author.class).queryAll();
-                Log.d("wanpg", "读取10000条人用时" + (System.currentTimeMillis() - start1));
+                Log.d("wanpg", "读取" + all.size() + "条人用时" + (System.currentTimeMillis() - start1));
             }
         }.start();
     }

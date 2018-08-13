@@ -2,8 +2,6 @@ package com.coredata.core.utils;
 
 import android.util.Log;
 
-import java.util.HashMap;
-
 import io.reactivex.annotations.NonNull;
 
 public class Debugger {
