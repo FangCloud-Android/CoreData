@@ -24,9 +24,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executors;
 
 import io.reactivex.schedulers.Schedulers;
 import io.reactivex.subjects.Subject;
@@ -45,12 +43,7 @@ public abstract class CoreDao<T> {
     public static final String RESULT_SUM = "result_sum";
 
     private CoreData cdInstance;
-
-    public static ExecutorService executor =
-            new ThreadPoolExecutor(0, 2,
-                    60L, TimeUnit.SECONDS,
-                    new SynchronousQueue<Runnable>(),
-                    new AsyncThreadFactory());
+    public static ExecutorService executor = Executors.newFixedThreadPool(2, new AsyncThreadFactory());
 
     /**
      * 数据库创建
